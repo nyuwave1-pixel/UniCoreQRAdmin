@@ -26,3 +26,6 @@ Thumbs.db
 # 임시 파일
 *.tmp
 *.log
+
+# Claude Code 세션 (절대 포함 금지)
+.claude/
