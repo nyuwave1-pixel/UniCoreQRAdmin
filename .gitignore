@@ -1,0 +1,28 @@
+# ── 보안: 절대 GitHub에 올리면 안 되는 파일 ──
+# 솔트 키 및 빌드 스크립트 (원본 DB 경로 포함)
+build-secure.js
+convert.js
+
+# 원본 Excel DB (절대 포함 금지)
+*.xlsx
+*.xls
+
+# Node modules
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 에디터
+.vscode/
+.idea/
+
+# 로컬 환경 설정
+.env
+.env.local
+
+# 임시 파일
+*.tmp
+*.log

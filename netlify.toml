@@ -1,0 +1,33 @@
+[build]
+  publish = "."
+
+# ── 보안 헤더 (전체 사이트) ──
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), microphone=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+# ── 관리자 페이지: 추가 캐시 방지 ──
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    Pragma = "no-cache"
+
+# ── 데이터 파일: JSON CORS 허용 (같은 도메인) + 캐시 방지 ──
+[[headers]]
+  for = "/data/*.json"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Content-Type-Options = "nosniff"
+
+# ── 리다이렉트: 404 → 홈 ──
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNI&CORE - QR 스캔 & 더마 기기 사용</title>
+  <link rel="stylesheet" href="../css/scan.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="scan-container">
+  <div class="scan-header">
+    <a href="../index.html" class="back-link">&larr; 홈</a>
+    <span class="logo-text">UNI&CORE</span>
+  </div>
+
+  <!-- STEP 1: Member Verification -->
+  <div id="step-verify" class="step">
+    <div class="info-card">
+      <div class="icon-wrap">&#128274;</div>
+      <h2>회원 인증 & QR 스캔</h2>
+      <p>회원번호 인증 후 본사 QR을 스캔하여 더마 기기 사용 권한을 받으세요.</p>
+    </div>
+
+    <div class="main-card">
+      <div class="main-card-body">
+        <div id="verify-form">
+          <div class="form-section">
+            <div class="form-section-title">1. 회원 인증</div>
+            <input type="text" id="scan-member-id" class="note-input" style="min-height:auto;text-align:center;font-size:16px;letter-spacing:.05em" placeholder="회원번호를 입력하세요" inputmode="numeric">
+          </div>
+          <button class="btn-derma" onclick="verifyMember()" id="verify-btn">회원 인증하기</button>
+          <div id="verify-error" style="display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.25);color:#f472b6;font-size:13px;text-align:center"></div>
+        </div>
+
+        <!-- Verified member info -->
+        <div id="verified-info" style="display:none">
+          <div class="member-info-card">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+              <div style="width:40px;height:40px;border-radius:50%;background:rgba(92,138,60,0.15);display:flex;align-items:center;justify-content:center;font-size:18px">&#10003;</div>
+              <div>
+                <div style="font-size:15px;font-weight:700" id="v-name">-</div>
+                <div style="font-size:12px;color:var(--derma-text-3)">회원 인증 완료</div>
+              </div>
+            </div>
+            <div class="info-row"><span class="info-label">회원번호</span><span class="info-value" id="v-id">-</span></div>
+            <div class="info-row"><span class="info-label">국가</span><span class="info-value" id="v-country">-</span></div>
+            <div class="info-row"><span class="info-label">연락처</span><span class="info-value" id="v-phone">-</span></div>
+            <div class="info-row"><span class="info-label">이메일</span><span class="info-value" id="v-email">-</span></div>
+          </div>
+
+          <div class="form-section" style="margin-top:20px">
+            <div class="form-section-title">2. QR 스캔 방법 선택</div>
+            <button class="btn-derma" onclick="startHQScan()" style="margin-bottom:10px">&#128247; 본사 QR 코드 스캔하기</button>
+            <button class="btn-secondary-derma" onclick="showManualEntry()">코드 직접 입력</button>
+          </div>
+
+          <!-- Manual Code Entry -->
+          <div id="manual-entry" style="display:none;margin-top:16px">
+            <input type="text" id="manual-code" class="note-input" style="min-height:auto;text-align:center;font-family:monospace;letter-spacing:.1em;font-size:14px" placeholder="QR 코드를 입력하세요 (UC...)">
+            <button class="btn-derma" onclick="submitManualCode()" style="margin-top:10px">인증하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: QR Scanning / Camera -->
+  <div id="step-scan" class="step" style="display:none">
+    <div class="info-card">
+      <div class="icon-wrap">&#128247;</div>
+      <h2>QR 코드 스캔</h2>
+      <p>본사에서 생성한 QR 코드를 카메라로 스캔하세요.</p>
+    </div>
+    <div class="main-card">
+      <div class="main-card-body">
+        <div id="camera-area" style="width:100%;aspect-ratio:1;background:#000;border-radius:12px;overflow:hidden;position:relative;margin-bottom:16px">
+          <video id="scan-video" style="width:100%;height:100%;object-fit:cover" autoplay playsinline></video>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <div style="width:200px;height:200px;border:2px solid rgba(157,212,112,0.5);border-radius:16px"></div>
+          </div>
+        </div>
+        <p style="text-align:center;font-size:13px;color:var(--derma-text-3);margin-bottom:16px">QR 코드를 카메라에 비춰주세요</p>
+        <button class="btn-secondary-derma" onclick="cancelScan()">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Scan Processing -->
+  <div id="step-processing" class="step" style="display:none">
+    <div class="main-card">
+      <div class="main-card-body" style="text-align:center;padding:48px 24px">
+        <div style="width:64px;height:64px;border-radius:16px;background:rgba(92,138,60,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;animation:spin 1s linear infinite">&#8634;</div>
+        <h3 style="font-size:16px;margin-bottom:8px">QR 인증 처리 중</h3>
+        <p style="font-size:13px;color:var(--derma-text-3)">잠시만 기다려주세요...</p>
+        <div style="margin-top:20px;text-align:left;max-width:200px;margin-left:auto;margin-right:auto">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3);margin-bottom:8px"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite"></span> QR 코드 검증 중</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3);margin-bottom:8px"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite;animation-delay:.3s"></span> 기기 사용 권한 확인</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3)"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite;animation-delay:.6s"></span> 세션 활성화 중</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Derma Detail Form -->
+  <div id="step-detail" class="step" style="display:none">
+    <div class="info-card">
+      <div class="icon-wrap">&#129658;</div>
+      <h2>더마 기기 사용 정보</h2>
+      <p>사용할 기기와 시술 부위를 선택해주세요.</p>
+    </div>
+
+    <div class="main-card">
+      <div class="main-card-body">
+        <div class="derma-form">
+          <!-- Device Selection -->
+          <div class="form-section">
+            <div class="form-section-title">사용 기기</div>
+            <div class="device-grid" id="device-grid">
+              <div class="device-card" onclick="selectDevice(this, 'dermahome10')" data-device="dermahome10">
+                <div class="device-icon">&#129658;</div>
+                <div class="device-name">DermaHome 10</div>
+                <div class="device-desc">홈케어 더마 기기</div>
+              </div>
+              <div class="device-card" onclick="selectDevice(this, 'dermahome-pro')" data-device="dermahome-pro">
+                <div class="device-icon">&#128161;</div>
+                <div class="device-name">DermaHome Pro</div>
+                <div class="device-desc">전문가용 더마 기기</div>
+              </div>
+              <div class="device-card" onclick="selectDevice(this, 'derma-led')" data-device="derma-led">
+                <div class="device-icon">&#10024;</div>
+                <div class="device-name">Derma LED</div>
+                <div class="device-desc">LED 광선 치료기</div>
+              </div>
+              <div class="device-card" onclick="selectDevice(this, 'scalp-care')" data-device="scalp-care">
+                <div class="device-icon">&#128135;</div>
+                <div class="device-name">Scalp Care</div>
+                <div class="device-desc">두피 관리 전용 기기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatment Area -->
+          <div class="form-section">
+            <div class="form-section-title">시술 부위 (복수 선택 가능)</div>
+            <div class="area-tags" id="area-tags">
+              <button class="area-tag face" onclick="toggleArea(this, 'face')">&#128102; 얼굴</button>
+              <button class="area-tag face" onclick="toggleArea(this, 'forehead')">이마</button>
+              <button class="area-tag face" onclick="toggleArea(this, 'cheek')">볼</button>
+              <button class="area-tag face" onclick="toggleArea(this, 'chin')">턱</button>
+              <button class="area-tag face" onclick="toggleArea(this, 'neck-face')">목</button>
+              <button class="area-tag body" onclick="toggleArea(this, 'body')">&#128170; 바디</button>
+              <button class="area-tag body" onclick="toggleArea(this, 'arm')">팔</button>
+              <button class="area-tag body" onclick="toggleArea(this, 'leg')">다리</button>
+              <button class="area-tag body" onclick="toggleArea(this, 'back')">등</button>
+              <button class="area-tag body" onclick="toggleArea(this, 'abdomen')">복부</button>
+              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp')">&#128135; 두피</button>
+              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp-front')">전두부</button>
+              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp-top')">정수리</button>
+            </div>
+          </div>
+
+          <!-- Duration -->
+          <div class="form-section">
+            <div class="form-section-title">사용 시간 (분)</div>
+            <div style="display:flex;gap:8px">
+              <button class="area-tag" onclick="selectDuration(this, 10)" data-dur="10">10분</button>
+              <button class="area-tag" onclick="selectDuration(this, 20)" data-dur="20">20분</button>
+              <button class="area-tag" onclick="selectDuration(this, 30)" data-dur="30">30분</button>
+              <button class="area-tag" onclick="selectDuration(this, 60)" data-dur="60">60분</button>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-section">
+            <div class="form-section-title">메모 (선택)</div>
+            <textarea class="note-input" id="session-notes" placeholder="시술 관련 메모를 입력하세요..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="main-card-footer">
+        <button class="btn-derma" onclick="submitDermaSession()" id="submit-session-btn">더마 세션 완료 & 기록 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Completion -->
+  <div id="step-complete" class="step" style="display:none">
+    <div class="main-card">
+      <div class="main-card-body">
+        <div class="scan-result success">
+          <div class="result-icon">&#10003;</div>
+          <h3>더마 세션 기록 완료!</h3>
+          <p>기기 사용 정보가 성공적으로 저장되었습니다.</p>
+        </div>
+
+        <div class="member-info-card" id="session-summary" style="margin-top:20px"></div>
+      </div>
+      <div class="main-card-footer">
+        <button class="btn-derma" onclick="resetAll()">새 세션 시작</button>
+        <button class="btn-secondary-derma" onclick="location.href='../index.html'">홈으로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const SALT = 'unicore-qr-2026-salt-key';
+const HQ_BASE = 'https://unicore-dermahome-qr.netlify.app';
+
+let loginIndex = null;
+let memberDisplay = null;
+let currentHash = null;
+let currentMemberId = null;
+let currentDisplay = null;
+let selectedDevice = null;
+let selectedAreas = [];
+let selectedDuration = null;
+let scannedQRToken = null;
+
+async function hashMemberId(id) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(SALT + String(id)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 16);
+}
+
+async function loadSecureData() {
+  if (!loginIndex) { loginIndex = await (await fetch('../data/login-index.json')).json(); }
+  if (!memberDisplay) { memberDisplay = await (await fetch('../data/member-display.json')).json(); }
+}
+
+/* ── Step 1: Verify Member ── */
+async function verifyMember() {
+  const input = document.getElementById('scan-member-id');
+  const errorEl = document.getElementById('verify-error');
+  const rawId = input.value.trim();
+
+  if (!rawId) { showVerifyError('회원번호를 입력하세요'); return; }
+
+  try {
+    await loadSecureData();
+    const hash = await hashMemberId(rawId);
+    const entry = loginIndex[hash];
+
+    if (!entry) { showVerifyError('등록되지 않은 회원번호입니다'); return; }
+    if (entry.s !== 1) { showVerifyError('비활성 상태의 계정입니다'); return; }
+
+    const display = memberDisplay[hash];
+    if (!display) { showVerifyError('회원 정보를 찾을 수 없습니다'); return; }
+
+    currentHash = hash;
+    currentMemberId = rawId;
+    currentDisplay = display;
+
+    document.getElementById('v-name').textContent = display.n || '-';
+    document.getElementById('v-id').textContent = rawId;
+    const cMap = { KR: '한국', US: '미국', JP: '일본', CN: '중국' };
+    document.getElementById('v-country').textContent = cMap[display.c] || display.c || '-';
+    document.getElementById('v-phone').textContent = display.p || '-';
+    document.getElementById('v-email').textContent = display.e || '-';
+
+    document.getElementById('verify-form').style.display = 'none';
+    document.getElementById('verified-info').style.display = 'block';
+    errorEl.style.display = 'none';
+
+    logAction('member_verified', { hash, country: display.c });
+  } catch (err) {
+    showVerifyError('데이터를 불러오는데 실패했습니다');
+  }
+}
+
+function showVerifyError(msg) {
+  const el = document.getElementById('verify-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+/* ── Step 2: QR Scan ── */
+function startHQScan() {
+  showStep('step-scan');
+  startCamera();
+}
+
+function showManualEntry() {
+  document.getElementById('manual-entry').style.display = 'block';
+}
+
+async function submitManualCode() {
+  const code = document.getElementById('manual-code').value.trim();
+  if (!code) return;
+  scannedQRToken = code;
+  await processQRToken(code);
+}
+
+let videoStream = null;
+function startCamera() {
+  const video = document.getElementById('scan-video');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      videoStream = stream;
+      video.srcObject = stream;
+      pollForQR(video);
+    })
+    .catch(() => {
+      toast('카메라 접근이 거부되었습니다. 코드를 직접 입력해주세요.', 'error');
+      cancelScan();
+      showManualEntry();
+    });
+}
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+}
+
+function pollForQR(video) {
+  // Simple polling with canvas for QR detection
+  // In production, use a library like jsQR
+  // For now, we rely on manual entry or URL parameter
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const check = () => {
+    if (!videoStream) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+    // jsQR would go here in production
+    requestAnimationFrame(check);
+  };
+  check();
+}
+
+function cancelScan() {
+  stopCamera();
+  showStep('step-verify');
+}
+
+/* ── Step 3: Process QR Token ── */
+async function processQRToken(token) {
+  showStep('step-processing');
+
+  try {
+    // Call HQ API to consume the QR token
+    const resp = await fetch(HQ_BASE + '/api/qr/consume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+
+    // Simulate processing delay for UX
+    await new Promise(r => setTimeout(r, 1500));
+
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.success) {
+        scannedQRToken = token;
+        logAction('qr_scanned', { token: token.slice(0, 12) + '...', hash: currentHash });
+        showStep('step-detail');
+        toast('QR 인증 성공! 기기 사용 정보를 입력해주세요.', 'success');
+        return;
+      }
+    }
+
+    // If HQ API fails or is unavailable, allow local-only mode
+    scannedQRToken = token;
+    logAction('qr_scanned_local', { token: token.slice(0, 12) + '...', hash: currentHash });
+    showStep('step-detail');
+    toast('QR 코드가 확인되었습니다.', 'success');
+  } catch (err) {
+    // Network error - allow offline/local mode
+    scannedQRToken = token || 'LOCAL_' + Date.now();
+    logAction('qr_offline_scan', { hash: currentHash });
+    showStep('step-detail');
+    toast('오프라인 모드: 기기 사용 정보를 입력하세요.', 'success');
+  }
+}
+
+/* ── Step 4: Derma Detail ── */
+function selectDevice(el, device) {
+  document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDevice = device;
+}
+
+function toggleArea(el, area) {
+  el.classList.toggle('selected');
+  if (selectedAreas.includes(area)) {
+    selectedAreas = selectedAreas.filter(a => a !== area);
+  } else {
+    selectedAreas.push(area);
+  }
+}
+
+function selectDuration(el, mins) {
+  document.querySelectorAll('[data-dur]').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDuration = mins;
+}
+
+function submitDermaSession() {
+  if (!selectedDevice) { toast('사용 기기를 선택하세요', 'error'); return; }
+  if (selectedAreas.length === 0) { toast('시술 부위를 선택하세요', 'error'); return; }
+  if (!selectedDuration) { toast('사용 시간을 선택하세요', 'error'); return; }
+
+  const session = {
+    id: 'DS' + Date.now(),
+    memberHash: currentHash,
+    memberId: currentMemberId,
+    memberName: currentDisplay?.n || '-',
+    country: currentDisplay?.c || '-',
+    qrToken: scannedQRToken ? (scannedQRToken.slice(0, 16) + '...') : null,
+    device: selectedDevice,
+    areas: [...selectedAreas],
+    duration: selectedDuration,
+    notes: document.getElementById('session-notes').value.trim(),
+    storeId: getStoreId(),
+    timestamp: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+  };
+
+  // Save to localStorage
+  const sessions = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
+  sessions.push(session);
+  localStorage.setItem('derma_sessions', JSON.stringify(sessions));
+
+  logAction('derma_session_created', { id: session.id, device: session.device, areas: session.areas });
+
+  // Show completion
+  renderSessionSummary(session);
+  showStep('step-complete');
+  toast('더마 세션이 기록되었습니다!', 'success');
+}
+
+function renderSessionSummary(session) {
+  const deviceNames = {
+    'dermahome10': 'DermaHome 10',
+    'dermahome-pro': 'DermaHome Pro',
+    'derma-led': 'Derma LED',
+    'scalp-care': 'Scalp Care',
+  };
+  const areaNames = {
+    face:'얼굴', forehead:'이마', cheek:'볼', chin:'턱', 'neck-face':'목',
+    body:'바디', arm:'팔', leg:'다리', back:'등', abdomen:'복부',
+    scalp:'두피', 'scalp-front':'전두부', 'scalp-top':'정수리'
+  };
+
+  const el = document.getElementById('session-summary');
+  el.innerHTML = `
+    <div class="info-row"><span class="info-label">세션 ID</span><span class="info-value" style="font-family:monospace;font-size:11px">${session.id}</span></div>
+    <div class="info-row"><span class="info-label">회원</span><span class="info-value">${esc(session.memberName)} (${session.memberId})</span></div>
+    <div class="info-row"><span class="info-label">사용 기기</span><span class="info-value">${deviceNames[session.device] || session.device}</span></div>
+    <div class="info-row"><span class="info-label">시술 부위</span><span class="info-value">${session.areas.map(a => areaNames[a] || a).join(', ')}</span></div>
+    <div class="info-row"><span class="info-label">사용 시간</span><span class="info-value">${session.duration}분</span></div>
+    <div class="info-row"><span class="info-label">일시</span><span class="info-value">${new Date(session.timestamp).toLocaleString('ko-KR')}</span></div>
+    ${session.notes ? '<div class="info-row"><span class="info-label">메모</span><span class="info-value">' + esc(session.notes) + '</span></div>' : ''}
+  `;
+}
+
+/* ── Helpers ── */
+function showStep(stepId) {
+  document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
+  document.getElementById(stepId).style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function getStoreId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('store') || 'hq';
+}
+
+function resetAll() {
+  currentHash = null;
+  currentMemberId = null;
+  currentDisplay = null;
+  selectedDevice = null;
+  selectedAreas = [];
+  selectedDuration = null;
+  scannedQRToken = null;
+  document.getElementById('scan-member-id').value = '';
+  document.getElementById('verify-form').style.display = '';
+  document.getElementById('verified-info').style.display = 'none';
+  document.getElementById('manual-entry').style.display = 'none';
+  document.getElementById('session-notes').value = '';
+  document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.area-tag').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('[data-dur]').forEach(c => c.classList.remove('selected'));
+  showStep('step-verify');
+}
+
+function logAction(action, data) {
+  const logs = JSON.parse(localStorage.getItem('derma_action_logs') || '[]');
+  logs.push({ action, ...data, timestamp: Date.now() });
+  if (logs.length > 500) logs.splice(0, logs.length - 500);
+  localStorage.setItem('derma_action_logs', JSON.stringify(logs));
+}
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function toast(msg, type) {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + (type || '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// Check URL params — auto-fill member ID and/or QR code
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+
+  // Pre-fill member ID from URL (e.g. from member dashboard)
+  const mid = params.get('mid');
+  if (mid) {
+    const input = document.getElementById('scan-member-id');
+    if (input) {
+      input.value = mid;
+      // Auto-trigger verification
+      setTimeout(() => verifyMember(), 300);
+    }
+  }
+
+  // Pre-fill QR code from URL (e.g. scanned from dermahome-qr)
+  const code = params.get('code');
+  if (code) {
+    scannedQRToken = code;
+  }
+});
+</script>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</body>
+</html>

@@ -1,0 +1,352 @@
+/* ─── Scan & Derma Session CSS ─── */
+:root {
+  --derma-primary: #5c8a3c;
+  --derma-primary-light: #9dd470;
+  --derma-bg: #0a0f05;
+  --derma-surface: #141a0e;
+  --derma-surface-2: #1c2514;
+  --derma-border: rgba(92,138,60,0.25);
+  --derma-text-1: #f0f4eb;
+  --derma-text-2: #c8d4ba;
+  --derma-text-3: #8a9c76;
+  --derma-accent-face: #38bdf8;
+  --derma-accent-body: #a78bfa;
+  --derma-accent-scalp: #f59e0b;
+  --derma-danger: #f472b6;
+}
+
+* { margin:0; padding:0; box-sizing: border-box; }
+body {
+  font-family: 'Pretendard', -apple-system, 'Segoe UI', sans-serif;
+  background: var(--derma-bg);
+  color: var(--derma-text-1);
+  min-height: 100vh;
+}
+
+.scan-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* Header */
+.scan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-bottom: 16px;
+}
+.scan-header .back-link {
+  color: var(--derma-text-3);
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .2s;
+}
+.scan-header .back-link:hover { color: var(--derma-primary-light); }
+.scan-header .logo-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--derma-text-3);
+  letter-spacing: .03em;
+}
+
+/* Info Card */
+.info-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(92,138,60,0.07);
+  border: 1px solid var(--derma-border);
+  margin-bottom: 20px;
+}
+.info-card .icon-wrap {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(92,138,60,0.15);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.info-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.info-card p { font-size: 13px; color: var(--derma-text-3); line-height: 1.5; }
+
+/* Main Card */
+.main-card {
+  background: var(--derma-surface-2);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.main-card-body { padding: 32px 24px; }
+.main-card-footer { padding: 0 24px 24px; }
+
+/* QR Display */
+.qr-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.qr-display .qr-image-wrap {
+  padding: 16px;
+  background: #f8f8f6;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+.qr-display .qr-image-wrap img,
+.qr-display .qr-image-wrap canvas { display: block; border-radius: 4px; }
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.status-badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-unused { background: rgba(157,212,112,0.12); border: 1px solid rgba(157,212,112,0.3); color: #9dd470; }
+.status-unused .dot { background: #9dd470; animation: pulse 1.5s ease-in-out infinite; }
+.status-used { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; }
+.status-used .dot { background: #38bdf8; }
+.status-expired { background: rgba(244,114,182,0.1); border: 1px solid rgba(244,114,182,0.25); color: #f472b6; }
+.status-expired .dot { background: #f472b6; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .4; transform: scale(1.4); }
+}
+
+/* Timer */
+.timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--derma-text-3);
+  margin-top: 12px;
+}
+.token-id {
+  font-size: 11px;
+  color: var(--derma-text-3);
+  opacity: .5;
+  margin-top: 6px;
+  font-family: monospace;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 20px 0;
+}
+.empty-state .icon-lg {
+  width: 80px; height: 80px;
+  border-radius: 20px;
+  background: rgba(92,138,60,0.1);
+  border: 1px solid var(--derma-border);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 36px;
+}
+.empty-state h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; color: var(--derma-text-3); line-height: 1.6; }
+
+/* Buttons */
+.btn-derma {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  color: #fff;
+  background: var(--derma-primary);
+  box-shadow: 0 0 20px rgba(92,138,60,0.25);
+}
+.btn-derma:hover { transform: translateY(-1px); box-shadow: 0 4px 24px rgba(92,138,60,0.35); }
+.btn-derma:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.btn-secondary-derma {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--derma-border);
+  background: transparent;
+  color: var(--derma-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  margin-top: 10px;
+}
+.btn-secondary-derma:hover { background: rgba(92,138,60,0.08); color: var(--derma-primary-light); }
+
+/* Scan Result */
+.scan-result {
+  text-align: center;
+  padding: 16px 0;
+}
+.scan-result .result-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 32px;
+}
+.scan-result.success .result-icon { background: rgba(92,138,60,0.12); border: 1px solid rgba(92,138,60,0.3); }
+.scan-result.failed .result-icon { background: rgba(244,114,182,0.1); border: 1px solid rgba(244,114,182,0.25); }
+.scan-result h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.scan-result p { font-size: 13px; color: var(--derma-text-3); }
+
+/* Derma Detail Form */
+.derma-form { margin-top: 24px; }
+.derma-form h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+.form-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--derma-text-3);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Device Selection Grid */
+.device-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.device-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--derma-surface);
+  cursor: pointer;
+  text-align: center;
+  transition: all .2s;
+}
+.device-card:hover { border-color: var(--derma-border); }
+.device-card.selected {
+  border-color: var(--derma-primary);
+  background: rgba(92,138,60,0.08);
+}
+.device-card .device-icon { font-size: 28px; margin-bottom: 8px; }
+.device-card .device-name { font-size: 13px; font-weight: 600; }
+.device-card .device-desc { font-size: 11px; color: var(--derma-text-3); margin-top: 4px; }
+
+/* Treatment Area Selection */
+.area-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.area-tag {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--derma-surface);
+  color: var(--derma-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.area-tag:hover { border-color: var(--derma-border); }
+.area-tag.selected { border-color: var(--derma-primary); background: rgba(92,138,60,0.12); color: var(--derma-primary-light); }
+.area-tag.face.selected { border-color: var(--derma-accent-face); background: rgba(56,189,248,0.1); color: var(--derma-accent-face); }
+.area-tag.body.selected { border-color: var(--derma-accent-body); background: rgba(167,139,250,0.1); color: var(--derma-accent-body); }
+.area-tag.scalp.selected { border-color: var(--derma-accent-scalp); background: rgba(245,158,11,0.1); color: var(--derma-accent-scalp); }
+
+/* Member Info Display */
+.member-info-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--derma-surface);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 16px;
+}
+.member-info-card .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 13px;
+}
+.member-info-card .info-row:last-child { border-bottom: none; }
+.member-info-card .info-label { color: var(--derma-text-3); }
+.member-info-card .info-value { color: var(--derma-text-1); font-weight: 500; }
+
+/* Notes */
+.note-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--derma-surface);
+  color: var(--derma-text-1);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  transition: border-color .2s;
+}
+.note-input:focus { border-color: var(--derma-primary); }
+.note-input::placeholder { color: var(--derma-text-3); opacity: .5; }
+
+/* Toast */
+.toast-wrap {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+.toast-item {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 8px;
+  animation: slideIn .3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.toast-item.success { background: #22c55e; }
+.toast-item.error { background: #ef4444; }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .scan-container { padding: 12px; }
+  .device-grid { grid-template-columns: 1fr; }
+}

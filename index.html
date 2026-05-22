@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNI&CORE - QR 프로모션</title>
+  <link rel="stylesheet" href="css/promo.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); min-height: 100vh; padding: 20px; }
+    .promo-container { max-width: 440px; }
+
+    .login-card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0,0,0,.3);
+    }
+    .login-header {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+      padding: 40px 28px 32px;
+      text-align: center;
+      color: #fff;
+    }
+    .login-header .logo {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,.2);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px; font-weight: 800;
+      backdrop-filter: blur(8px);
+    }
+    .login-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .login-header p { font-size: 14px; opacity: .8; }
+    .login-body { padding: 32px 28px; }
+    .login-field { margin-bottom: 20px; }
+    .login-field label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--gray-700); margin-bottom: 8px;
+    }
+    .login-field input {
+      width: 100%; padding: 14px 16px;
+      border: 2px solid var(--gray-200); border-radius: 12px;
+      font-size: 16px; font-family: inherit; outline: none;
+      transition: border-color .2s;
+      text-align: center; letter-spacing: .05em;
+    }
+    .login-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,.1); }
+    .login-field input::placeholder { letter-spacing: normal; text-align: left; }
+    .login-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all .2s;
+    }
+    .login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.4); }
+    .login-btn:active { transform: translateY(0); }
+    .login-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .login-error {
+      display: none; padding: 12px 16px;
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 10px; color: #dc2626;
+      font-size: 13px; margin-bottom: 16px;
+      text-align: center;
+    }
+    .login-error.show { display: block; }
+    .login-footer {
+      text-align: center; padding-top: 16px;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .member-dashboard { display: none; }
+    .member-dashboard.show { display: block; }
+    .member-card {
+      background: #fff; border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+    .member-header {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 28px; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .member-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .member-info p { font-size: 13px; opacity: .8; }
+    .logout-btn {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      color: #fff; padding: 6px 14px; border-radius: 8px;
+      font-size: 12px; cursor: pointer; font-family: inherit;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,.25); }
+    .member-body { padding: 28px; }
+    .member-detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 28px;
+    }
+    .detail-item label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--gray-400); display: block; margin-bottom: 2px;
+    }
+    .detail-item p { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+
+    .qr-section {
+      background: var(--gray-50); border-radius: 16px;
+      padding: 24px; text-align: center;
+    }
+    .qr-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .qr-output {
+      display: none; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .qr-output.show { display: flex; }
+    .qr-output canvas { border-radius: 8px; }
+    .qr-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+    .qr-actions button {
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      font-family: inherit; border: none; transition: all .15s;
+    }
+    .qr-gen-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; padding: 14px 28px; border: none;
+      border-radius: 12px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .2s;
+      width: 100%;
+    }
+    .qr-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,.3); }
+    .btn-download { background: var(--primary); color: #fff; }
+    .btn-download:hover { background: #4f46e5; }
+    .btn-copy { background: var(--gray-200); color: var(--gray-700); }
+    .btn-copy:hover { background: var(--gray-300); }
+
+    .qr-history { margin-top: 24px; text-align: left; }
+    .qr-history h4 {
+      font-size: 14px; font-weight: 600;
+      color: var(--gray-600); margin-bottom: 12px;
+    }
+    .history-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-date { color: var(--gray-400); font-size: 12px; }
+
+    .loading-spinner {
+      display: none;
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .admin-link {
+      display: block; text-align: center; margin-top: 16px;
+      font-size: 12px; color: rgba(255,255,255,.4);
+      text-decoration: none;
+    }
+    .admin-link:hover { color: rgba(255,255,255,.7); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div class="promo-container" id="login-view">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">U&C</div>
+      <h1>UNI&CORE QR 프로모션</h1>
+      <p>회원번호를 입력하여 로그인하세요</p>
+    </div>
+    <div class="login-body">
+      <div class="login-error" id="login-error"></div>
+      <form onsubmit="event.preventDefault(); handleLogin();">
+        <div class="login-field">
+          <label>회원번호</label>
+          <input type="text" id="member-id-input" placeholder="회원번호를 입력하세요" inputmode="numeric" autocomplete="off">
+        </div>
+        <button type="submit" class="login-btn" id="login-btn">
+          <span id="login-text">로그인</span>
+          <div class="loading-spinner" id="login-spinner"></div>
+        </button>
+      </form>
+      <div class="login-footer">
+        <p style="color:var(--gray-400);font-size:12px;margin-top:12px">회원만 QR코드를 생성할 수 있습니다</p>
+      </div>
+    </div>
+  </div>
+  <a href="admin/index.html" class="admin-link">관리자 페이지</a>
+</div>
+
+<!-- MEMBER DASHBOARD VIEW -->
+<div class="promo-container member-dashboard" id="member-view">
+  <div class="member-card">
+    <div class="member-header">
+      <div class="member-info">
+        <h2 id="member-name">-</h2>
+        <p>회원번호: <span id="member-id-display">-</span></p>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
+    </div>
+    <div class="member-body">
+      <div class="member-detail-grid">
+        <div class="detail-item">
+          <label>국가</label>
+          <p id="member-country">-</p>
+        </div>
+        <div class="detail-item">
+          <label>상태</label>
+          <p id="member-status">-</p>
+        </div>
+        <div class="detail-item">
+          <label>연락처</label>
+          <p id="member-phone">-</p>
+        </div>
+        <div class="detail-item">
+          <label>이메일</label>
+          <p id="member-email">-</p>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <h3>내 QR 코드</h3>
+        <div id="qr-placeholder">
+          <p style="color:var(--gray-400);font-size:13px;margin-bottom:16px">나만의 QR 코드를 생성하여 프로모션에 활용하세요</p>
+          <button class="qr-gen-btn" onclick="generateMemberQR()">QR 코드 생성</button>
+        </div>
+        <div class="qr-output" id="qr-output">
+          <div id="qr-canvas-wrap"></div>
+          <p style="font-size:12px;color:var(--gray-500)" id="qr-url-display"></p>
+          <div class="qr-actions">
+            <button class="btn-download" onclick="downloadMemberQR()">다운로드</button>
+            <button class="btn-copy" onclick="copyMemberQRLink()">링크 복사</button>
+          </div>
+        </div>
+        <div class="qr-history" id="qr-history"></div>
+      </div>
+
+      <!-- Derma Scan Shortcut -->
+      <div style="margin-top:20px;padding:16px;background:rgba(92,138,60,0.08);border-radius:14px;border:1px solid rgba(92,138,60,0.2)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:22px">&#129658;</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#1e293b">더마 기기 QR 스캔</div>
+            <div style="font-size:12px;color:var(--gray-400)">본사 QR로 더마 기기 사용 기록</div>
+          </div>
+        </div>
+        <a id="derma-scan-link" href="scan/index.html" style="display:block;width:100%;padding:12px;background:linear-gradient(135deg,#5c8a3c,#7bae52);color:#fff;text-align:center;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none">
+          &#128247; QR 스캔 & 더마 세션 시작
+        </a>
+      </div>
+    </div>
+  </div>
+  <a href="admin/index.html" class="admin-link">관리자 페이지</a>
+</div>
+
+<div class="toast-container" style="position:fixed;top:20px;right:20px;z-index:300"></div>
+
+<script>
+const SALT = 'unicore-qr-2026-salt-key';
+let loginIndex = null;
+let memberDisplay = null;
+let currentHash = null;
+let currentMemberId = null;
+
+async function hashMemberId(id) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(SALT + String(id));
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  const arr = Array.from(new Uint8Array(buf));
+  return arr.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const savedHash = sessionStorage.getItem('qr_hash');
+  const savedId = sessionStorage.getItem('qr_mid');
+  if (savedHash && savedId) {
+    try {
+      currentHash = savedHash;
+      currentMemberId = savedId;
+      await loadSecureData();
+      const display = memberDisplay[currentHash];
+      if (display) {
+        showMemberDashboard(display);
+      } else {
+        sessionStorage.removeItem('qr_hash');
+        sessionStorage.removeItem('qr_mid');
+      }
+    } catch { sessionStorage.removeItem('qr_hash'); sessionStorage.removeItem('qr_mid'); }
+  }
+});
+
+async function loadSecureData() {
+  if (!loginIndex) {
+    const resp = await fetch('data/login-index.json');
+    loginIndex = await resp.json();
+  }
+  if (!memberDisplay) {
+    const resp = await fetch('data/member-display.json');
+    memberDisplay = await resp.json();
+  }
+}
+
+async function handleLogin() {
+  const input = document.getElementById('member-id-input');
+  const errorEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  const rawId = input.value.trim();
+
+  if (!rawId) {
+    showLoginError('회원번호를 입력하세요');
+    return;
+  }
+
+  btn.disabled = true;
+  document.getElementById('login-text').style.display = 'none';
+  document.getElementById('login-spinner').style.display = 'block';
+  errorEl.classList.remove('show');
+
+  try {
+    await loadSecureData();
+    const hash = await hashMemberId(rawId);
+    const entry = loginIndex[hash];
+
+    if (!entry) {
+      showLoginError('등록되지 않은 회원번호입니다');
+      resetLoginBtn();
+      return;
+    }
+
+    if (entry.s !== 1) {
+      showLoginError('비활성 상태의 계정입니다. 관리자에게 문의하세요.');
+      resetLoginBtn();
+      return;
+    }
+
+    const display = memberDisplay[hash];
+    if (!display) {
+      showLoginError('회원 정보를 찾을 수 없습니다');
+      resetLoginBtn();
+      return;
+    }
+
+    currentHash = hash;
+    currentMemberId = rawId;
+    sessionStorage.setItem('qr_hash', hash);
+    sessionStorage.setItem('qr_mid', rawId);
+    logMemberLogin(hash, display);
+    showMemberDashboard(display);
+  } catch (err) {
+    showLoginError('데이터를 불러오는데 실패했습니다');
+  }
+
+  resetLoginBtn();
+}
+
+function resetLoginBtn() {
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-text').style.display = '';
+  document.getElementById('login-spinner').style.display = 'none';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showMemberDashboard(display) {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('member-view').classList.add('show');
+  document.getElementById('member-name').textContent = display.n || '-';
+  document.getElementById('member-id-display').textContent = currentMemberId;
+  const countryMap = { KR: '한국', US: '미국', JP: '일본', CN: '중국' };
+  document.getElementById('member-country').textContent = countryMap[display.c] || display.c || '-';
+  document.getElementById('member-status').textContent = '활동';
+  document.getElementById('member-phone').textContent = display.p || '-';
+  document.getElementById('member-email').textContent = display.e || '-';
+
+  const history = getMemberQRHistory(currentHash);
+  if (history.length > 0) {
+    generateMemberQR();
+  }
+  renderQRHistory(currentHash);
+
+  // Update derma scan link with member pre-fill
+  const scanLink = document.getElementById('derma-scan-link');
+  if (scanLink) scanLink.href = 'scan/index.html?mid=' + encodeURIComponent(currentMemberId);
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('qr_hash');
+  sessionStorage.removeItem('qr_mid');
+  currentHash = null;
+  currentMemberId = null;
+  document.getElementById('member-view').classList.remove('show');
+  document.getElementById('login-view').style.display = '';
+  document.getElementById('member-id-input').value = '';
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('qr-output').classList.remove('show');
+  document.getElementById('qr-placeholder').style.display = '';
+  document.getElementById('qr-canvas-wrap').innerHTML = '';
+}
+
+function generateMemberQR() {
+  if (!currentHash) return;
+  const base = window.location.origin + window.location.pathname.replace('index.html', '');
+  const qrUrl = base + 'promo/index.html?member=' + currentHash;
+
+  document.getElementById('qr-placeholder').style.display = 'none';
+  const output = document.getElementById('qr-output');
+  output.classList.add('show');
+  const wrap = document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML = '';
+
+  new QRCode(wrap, {
+    text: qrUrl,
+    width: 200,
+    height: 200,
+    colorDark: '#0f172a',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+
+  document.getElementById('qr-url-display').textContent = qrUrl;
+  saveMemberQRHistory(currentHash);
+  renderQRHistory(currentHash);
+}
+
+function downloadMemberQR() {
+  const canvas = document.querySelector('#qr-canvas-wrap canvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = 'QR_' + currentHash.slice(0, 8) + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('QR 코드가 다운로드되었습니다', 'success');
+}
+
+function copyMemberQRLink() {
+  const url = document.getElementById('qr-url-display').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    toast('링크가 복사되었습니다', 'success');
+  }).catch(() => {
+    prompt('링크를 복사하세요:', url);
+  });
+}
+
+function logMemberLogin(hash, display) {
+  const logs = JSON.parse(localStorage.getItem('qr_login_logs') || '[]');
+  logs.push({
+    hash: hash,
+    maskedName: display.n,
+    country: display.c,
+    timestamp: Date.now(),
+  });
+  localStorage.setItem('qr_login_logs', JSON.stringify(logs));
+}
+
+function saveMemberQRHistory(hash) {
+  const key = 'qr_history_' + hash;
+  const history = JSON.parse(localStorage.getItem(key) || '[]');
+  history.unshift({ timestamp: Date.now() });
+  if (history.length > 20) history.length = 20;
+  localStorage.setItem(key, JSON.stringify(history));
+
+  const allGen = JSON.parse(localStorage.getItem('qr_gen_logs') || '[]');
+  allGen.push({ hash: hash, timestamp: Date.now() });
+  localStorage.setItem('qr_gen_logs', JSON.stringify(allGen));
+}
+
+function getMemberQRHistory(hash) {
+  return JSON.parse(localStorage.getItem('qr_history_' + hash) || '[]');
+}
+
+function renderQRHistory(hash) {
+  const history = getMemberQRHistory(hash);
+  const container = document.getElementById('qr-history');
+  if (history.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = '<h4>QR 생성 이력</h4>' +
+    history.slice(0, 5).map(h => {
+      const d = new Date(h.timestamp);
+      const dateStr = d.getFullYear() + '.' +
+        String(d.getMonth()+1).padStart(2,'0') + '.' +
+        String(d.getDate()).padStart(2,'0') + ' ' +
+        String(d.getHours()).padStart(2,'0') + ':' +
+        String(d.getMinutes()).padStart(2,'0');
+      return '<div class="history-item"><span>QR 코드 생성</span><span class="history-date">' + dateStr + '</span></div>';
+    }).join('');
+}
+
+function toast(msg, type) {
+  const container = document.querySelector('.toast-container');
+  const el = document.createElement('div');
+  el.style.cssText = 'padding:12px 20px;border-radius:10px;font-size:14px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:toastIn .3s ease;margin-bottom:8px;';
+  el.style.background = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#1e293b';
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+</script>
+</body>
+</html>
