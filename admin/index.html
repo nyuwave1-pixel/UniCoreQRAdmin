@@ -57,23 +57,52 @@ const ADMIN_HASH = 'c5c3218ca9cd719ebcc537a417eef48dd31216e9247ff4d24cf66e9d9914
 const ADMIN_SESSION_KEY = 'qr_admin_auth';
 const ADMIN_SESSION_TTL = 8 * 60 * 60 * 1000; // 8시간
 
+// Brute-force protection (in-memory, resets on page reload)
+let _adminAttempts = 0;
+let _adminLockedUntil = 0;
+const ADMIN_MAX_ATTEMPTS = 5;
+const ADMIN_LOCKOUT_MS = 10 * 60 * 1000; // 10분
+
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
 async function checkAdminPw() {
-  const pw = document.getElementById('admin-pw-input').value;
+  const errEl = document.getElementById('gate-error');
+  const input = document.getElementById('admin-pw-input');
+
+  // Lockout check
+  const now = Date.now();
+  if (_adminLockedUntil > now) {
+    const remain = Math.ceil((_adminLockedUntil - now) / 60000);
+    errEl.textContent = `잠금 중 — ${remain}분 후 다시 시도하세요`;
+    errEl.style.display = 'block';
+    input.value = '';
+    return;
+  }
+
+  const pw = input.value;
   if (!pw) return;
   const hash = await sha256(pw);
+
   if (hash === ADMIN_HASH) {
+    _adminAttempts = 0;
     sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
     document.getElementById('admin-gate').style.display = 'none';
-    document.getElementById('admin-pw-input').value = '';
+    input.value = '';
   } else {
-    document.getElementById('gate-error').style.display = 'block';
-    document.getElementById('admin-pw-input').value = '';
-    document.getElementById('admin-pw-input').focus();
+    _adminAttempts++;
+    input.value = '';
+    if (_adminAttempts >= ADMIN_MAX_ATTEMPTS) {
+      _adminLockedUntil = Date.now() + ADMIN_LOCKOUT_MS;
+      _adminAttempts = 0;
+      errEl.textContent = `비밀번호 ${ADMIN_MAX_ATTEMPTS}회 오류 — 10분간 잠금됩니다`;
+    } else {
+      errEl.textContent = `비밀번호가 올바르지 않습니다 (${_adminAttempts}/${ADMIN_MAX_ATTEMPTS})`;
+    }
+    errEl.style.display = 'block';
+    input.focus();
   }
 }
 

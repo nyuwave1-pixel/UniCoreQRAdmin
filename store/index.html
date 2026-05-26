@@ -213,13 +213,27 @@
 </div>
 
 <script>
-/* ── Demo Store Data ── */
+/* ── Store Credentials (SHA-256 hashed passwords) ──
+   비밀번호 변경: node -e "require('crypto').createHash('sha256').update('새비밀번호').digest('hex')"
+   STORE001~003: '1234' → 03ac67...
+   HQ: 'admin' → 8c6976...
+──────────────────────────────────────────────────── */
 const STORES = {
-  'STORE001': { name: '강남점', pw: '1234', region: '서울' },
-  'STORE002': { name: '부산점', pw: '1234', region: '부산' },
-  'STORE003': { name: '제주점', pw: '1234', region: '제주' },
-  'HQ': { name: '본사 직영', pw: 'admin', region: '서울' },
+  'STORE001': { name: '강남점', pwHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', region: '서울' },
+  'STORE002': { name: '부산점', pwHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', region: '부산' },
+  'STORE003': { name: '제주점', pwHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', region: '제주' },
+  'HQ': { name: '본사 직영', pwHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', region: '서울' },
 };
+
+// Brute-force protection state
+const _loginAttempts = {};
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5분
+
+async function sha256Store(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
 const DEVICE_NAMES = {
   'dermahome10': 'DermaHome 10',
@@ -248,17 +262,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ── Store Login ── */
-function storeLogin() {
+async function storeLogin() {
   const storeId = document.getElementById('store-id-input').value.trim().toUpperCase();
   const pw = document.getElementById('store-pw-input').value;
   const errEl = document.getElementById('store-error');
 
   if (!storeId || !pw) { errEl.textContent = '매장 코드와 비밀번호를 입력하세요'; errEl.classList.add('show'); return; }
 
-  const store = STORES[storeId];
-  if (!store || store.pw !== pw) { errEl.textContent = '매장 코드 또는 비밀번호가 올바르지 않습니다'; errEl.classList.add('show'); return; }
+  // Brute-force check
+  const now = Date.now();
+  const attempts = _loginAttempts[storeId] || { count: 0, lockedUntil: 0 };
+  if (attempts.lockedUntil > now) {
+    const remain = Math.ceil((attempts.lockedUntil - now) / 60000);
+    errEl.textContent = `잠금 중 — ${remain}분 후 다시 시도하세요`;
+    errEl.classList.add('show');
+    return;
+  }
 
-  currentStore = { id: storeId, ...store };
+  const store = STORES[storeId];
+  if (!store) {
+    errEl.textContent = '매장 코드 또는 비밀번호가 올바르지 않습니다';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const hash = await sha256Store(pw);
+  if (hash !== store.pwHash) {
+    attempts.count = (attempts.count || 0) + 1;
+    if (attempts.count >= MAX_ATTEMPTS) {
+      attempts.lockedUntil = now + LOCKOUT_MS;
+      attempts.count = 0;
+      errEl.textContent = `비밀번호 ${MAX_ATTEMPTS}회 오류 — 5분간 잠금됩니다`;
+    } else {
+      errEl.textContent = `비밀번호가 올바르지 않습니다 (${attempts.count}/${MAX_ATTEMPTS})`;
+    }
+    _loginAttempts[storeId] = attempts;
+    errEl.classList.add('show');
+    document.getElementById('store-pw-input').value = '';
+    return;
+  }
+
+  // Success — reset attempts
+  delete _loginAttempts[storeId];
+  currentStore = { id: storeId, name: store.name, region: store.region };
   sessionStorage.setItem('store_login', JSON.stringify(currentStore));
   errEl.classList.remove('show');
   showStoreDashboard();

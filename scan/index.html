@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UNI&CORE - QR 스캔 & 더마 기기 사용</title>
   <link rel="stylesheet" href="../css/scan.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -296,12 +296,16 @@ async function submitManualCode() {
 }
 
 let videoStream = null;
+let _qrScanActive = false;
+
 function startCamera() {
   const video = document.getElementById('scan-video');
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } })
     .then(stream => {
       videoStream = stream;
       video.srcObject = stream;
+      video.play();
+      _qrScanActive = true;
       pollForQR(video);
     })
     .catch(() => {
@@ -312,6 +316,7 @@ function startCamera() {
 }
 
 function stopCamera() {
+  _qrScanActive = false;
   if (videoStream) {
     videoStream.getTracks().forEach(t => t.stop());
     videoStream = null;
@@ -319,24 +324,40 @@ function stopCamera() {
 }
 
 function pollForQR(video) {
-  // Simple polling with canvas for QR detection
-  // In production, use a library like jsQR
-  // For now, we rely on manual entry or URL parameter
+  if (!_qrScanActive) return;
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+    requestAnimationFrame(() => pollForQR(video));
+    return;
+  }
+
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 
-  const check = () => {
-    if (!videoStream) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    // jsQR would go here in production
-    requestAnimationFrame(check);
+  const tick = () => {
+    if (!_qrScanActive) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+
+    if (code && code.data) {
+      // QR 코드 감지 성공
+      _qrScanActive = false;
+      stopCamera();
+      scannedQRToken = code.data;
+      toast('QR 코드 감지됨!', 'success');
+      processQRToken(code.data);
+      return;
+    }
+
+    requestAnimationFrame(tick);
   };
-  check();
+  requestAnimationFrame(tick);
 }
 
 function cancelScan() {
+  _qrScanActive = false;
   stopCamera();
   showStep('step-verify');
 }
