@@ -90,6 +90,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         QR 스캔
       </a>
+      <a class="nav-item" data-section="store-benefits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        혜택 지급
+      </a>
       <a class="nav-item" data-section="store-sessions">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         세션 기록
@@ -220,6 +224,39 @@
         <a id="start-scan-btn" href="#" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;font-size:15px;text-decoration:none;background:#5c8a3c">
           &#128247; QR 스캔 시작하기
         </a>
+      </div>
+    </section>
+
+    <!-- BENEFITS -->
+    <section id="section-store-benefits" class="page-section">
+      <div style="max-width:640px;margin:0 auto">
+
+        <!-- 회원 조회 -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><h3>&#128100; 회원 혜택 조회</h3></div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">회원번호를 입력하면 방문 횟수와 달성 혜택을 확인할 수 있습니다.</p>
+            <div style="display:flex;gap:10px">
+              <input type="text" id="benefit-member-search" class="store-login-body" style="flex:1;padding:10px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none" placeholder="회원번호 입력" inputmode="numeric" onkeydown="if(event.key==='Enter')lookupMemberBenefits()">
+              <button class="btn btn-primary" onclick="lookupMemberBenefits()">조회</button>
+            </div>
+            <div id="benefit-member-result" style="display:none;margin-top:20px"></div>
+          </div>
+        </div>
+
+        <!-- 지급 대기 목록 -->
+        <div class="card">
+          <div class="card-header">
+            <h3>&#9733; 이 매장 지급 대기 혜택</h3>
+            <span style="font-size:12px;color:var(--gray-400)" id="store-benefit-count"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>혜택명</th><th>회원</th><th>달성일</th><th>액션</th></tr></thead>
+              <tbody id="store-issuance-body"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -367,11 +404,12 @@ function showStoreSection(name) {
   document.getElementById('section-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item[data-section]').forEach(n => n.classList.remove('active'));
   document.querySelector('.nav-item[data-section="' + name + '"]')?.classList.add('active');
-  const titles = { 'store-dash':'매장 대시보드','store-qr-gen':'매장 QR 생성','store-scan':'QR 스캔','store-sessions':'세션 기록' };
+  const titles = { 'store-dash':'매장 대시보드','store-qr-gen':'매장 QR 생성','store-scan':'QR 스캔','store-benefits':'혜택 지급','store-sessions':'세션 기록' };
   document.querySelector('.header-title').textContent = titles[name] || '';
   if (name === 'store-dash') renderStoreDashboard();
   else if (name === 'store-sessions') renderStoreSessions();
   else if (name === 'store-qr-gen') renderStoreQRHistory();
+  else if (name === 'store-benefits') renderStoreBenefits();
 }
 
 /* ── Store QR Generation ── */
@@ -545,6 +583,163 @@ function exportSessions() {
   a.download = 'store_sessions_' + new Date().toISOString().split('T')[0] + '.csv';
   a.click();
   toast('CSV 다운로드 완료', 'success');
+}
+
+/* ════════════════════════════════
+   BENEFITS (혜택 지급)
+════════════════════════════════ */
+const SALT_B = 'unicore-qr-2026-salt-key';
+const BENEFIT_TYPES_S = { product:'상품 제공', device:'미용 기기 이용권', health:'헬스케어 현물', discount:'할인 혜택', custom:'직접 입력' };
+
+function getBenefits() { return JSON.parse(localStorage.getItem('uc_benefits') || '[]'); }
+function getIssuances() { return JSON.parse(localStorage.getItem('uc_issuances') || '[]'); }
+function saveIssuances(list) { localStorage.setItem('uc_issuances', JSON.stringify(list)); }
+function getVisits() { return JSON.parse(localStorage.getItem('uc_visits') || '[]'); }
+function saveVisits(list) { localStorage.setItem('uc_visits', JSON.stringify(list)); }
+
+async function hashId(id) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT_B + String(id)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,16);
+}
+
+/* 혜택 섹션 렌더 */
+function renderStoreBenefits() {
+  const issuances = getIssuances();
+  const storeIssuances = issuances.filter(i => i.status === 'pending' && (i.storeId === currentStore?.id || !i.storeId));
+  document.getElementById('store-benefit-count').textContent = storeIssuances.length + '건';
+
+  const tbody = document.getElementById('store-issuance-body');
+  if (storeIssuances.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray-400)">지급 대기 혜택이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = storeIssuances.map(i => {
+    const benefits = getBenefits();
+    const b = benefits.find(x => x.id === i.benefitId);
+    return '<tr>' +
+      '<td><strong>' + esc(i.benefitName) + '</strong>' +
+        (b ? '<br><span style="font-size:11px;color:var(--gray-500)">' + esc(b.rewardDetail||'') + '</span>' : '') + '</td>' +
+      '<td>' + esc(i.memberName||'-') + '<br><code style="font-size:10px;color:var(--gray-400)">' + (i.memberHash||'').slice(0,10) + '...</code></td>' +
+      '<td style="font-size:12px">' + fmtDate(i.triggeredAt) + '</td>' +
+      '<td><button class="btn btn-primary" onclick="storeIssueReward(\'' + i.id + '\')" style="font-size:12px;padding:6px 14px;background:#16a34a">지급 완료</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function storeIssueReward(issuanceId) {
+  const issuances = getIssuances();
+  const i = issuances.find(x => x.id === issuanceId);
+  if (!i) return;
+  i.status = 'issued';
+  i.issuedAt = Date.now();
+  i.issuedBy = currentStore?.id || 'store';
+  saveIssuances(issuances);
+  renderStoreBenefits();
+  toast('혜택 지급 완료!', 'success');
+}
+
+/* 회원 조회 */
+async function lookupMemberBenefits() {
+  const memberId = document.getElementById('benefit-member-search').value.trim();
+  if (!memberId) { toast('회원번호를 입력하세요', 'error'); return; }
+
+  const hash = await hashId(memberId);
+  const visits = getVisits().filter(v => v.memberHash === hash);
+  const sessions = JSON.parse(localStorage.getItem('derma_sessions')||'[]').filter(s => s.memberHash === hash);
+  const issuances = getIssuances().filter(i => i.memberHash === hash);
+  const benefits = getBenefits().filter(b => b.isActive);
+
+  // 이번 달 방문 수
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthlyVisits = visits.filter(v => (v.visitedAt||'').slice(0,7) === thisMonth);
+
+  // 혜택 달성 여부 계산
+  const earned = benefits.map(b => {
+    let count = 0, target = b.condition?.value || 0, label = '';
+    if (b.condition?.type === 'visit_count') { count = visits.length; label = '누적 방문'; }
+    else if (b.condition?.type === 'session_count') { count = sessions.length; label = '더마 세션'; }
+    else if (b.condition?.type === 'monthly_visit') { count = monthlyVisits.length; label = '이번 달 방문'; }
+    const pct = Math.min(100, Math.floor((count / target) * 100));
+    const isIssued = issuances.some(i => i.benefitId === b.id && i.status === 'issued');
+    const isPending = issuances.some(i => i.benefitId === b.id && i.status === 'pending');
+    const isMet = count >= target;
+    return { b, count, target, label, pct, isMet, isIssued, isPending };
+  });
+
+  const resultEl = document.getElementById('benefit-member-result');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML =
+    '<div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:12px;padding:16px;margin-bottom:16px">' +
+      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">' +
+        '<div style="text-align:center;flex:1;min-width:80px"><div style="font-size:24px;font-weight:800;color:#6366f1">' + visits.length + '</div><div style="font-size:11px;color:var(--gray-500)">누적 방문</div></div>' +
+        '<div style="text-align:center;flex:1;min-width:80px"><div style="font-size:24px;font-weight:800;color:#0ea5e9">' + sessions.length + '</div><div style="font-size:11px;color:var(--gray-500)">더마 세션</div></div>' +
+        '<div style="text-align:center;flex:1;min-width:80px"><div style="font-size:24px;font-weight:800;color:#16a34a">' + monthlyVisits.length + '</div><div style="font-size:11px;color:var(--gray-500)">이번 달 방문</div></div>' +
+        '<div style="text-align:center;flex:1;min-width:80px"><div style="font-size:24px;font-weight:800;color:#f59e0b">' + issuances.filter(i=>i.status==='issued').length + '</div><div style="font-size:11px;color:var(--gray-500)">받은 혜택</div></div>' +
+      '</div>' +
+    '</div>' +
+    (earned.length === 0 ? '<p style="text-align:center;color:var(--gray-400);font-size:13px">등록된 혜택이 없습니다</p>' :
+    earned.map(e => {
+      const barColor = e.isMet ? '#16a34a' : '#6366f1';
+      const statusChip = e.isIssued
+        ? '<span style="background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">✓ 지급 완료</span>'
+        : e.isPending
+          ? '<span style="background:#fef9c3;color:#d97706;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">⏳ 지급 대기</span>'
+          : e.isMet
+            ? '<button onclick="storeTriggerBenefit(\'' + e.b.id + '\',\'' + hash + '\',\'' + memberId + '\')" style="background:#6366f1;color:#fff;border:none;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;cursor:pointer">지급 처리</button>'
+            : '<span style="font-size:11px;color:var(--gray-400)">' + e.count + '/' + e.target + ' ' + e.label + '</span>';
+      return '<div style="background:#fff;border:1px solid var(--gray-200);border-radius:10px;padding:14px;margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<div><strong style="font-size:13px">' + esc(e.b.name) + '</strong><div style="font-size:11px;color:var(--gray-500);margin-top:2px">' + esc(e.b.rewardDetail||'') + (e.b.productUrl ? ' <a href="' + esc(e.b.productUrl) + '" target="_blank" style="color:#6366f1">🔗 상품 보기</a>' : '') + '</div></div>' +
+          statusChip +
+        '</div>' +
+        '<div style="background:var(--gray-100);border-radius:20px;height:6px;overflow:hidden">' +
+          '<div style="height:6px;border-radius:20px;background:' + barColor + ';width:' + e.pct + '%;transition:width .5s"></div>' +
+        '</div>' +
+      '</div>';
+    }).join(''));
+
+  // 방문 기록 추가 (조회 시 현재 매장 방문 기록)
+  addVisitRecord(hash, memberId, visits.length);
+}
+
+function storeTriggerBenefit(benefitId, memberHash, memberId) {
+  const benefits = getBenefits();
+  const b = benefits.find(x => x.id === benefitId);
+  if (!b) return;
+  const issuances = getIssuances();
+  const already = issuances.some(i => i.benefitId === benefitId && i.memberHash === memberHash && ['pending','issued'].includes(i.status));
+  if (already) { toast('이미 처리된 혜택입니다', 'error'); return; }
+  issuances.push({
+    id: 'BI' + Date.now(),
+    benefitId,
+    benefitName: b.name,
+    memberHash,
+    memberName: memberId,
+    storeId: currentStore?.id || 'STORE',
+    status: 'pending',
+    triggeredAt: Date.now()
+  });
+  saveIssuances(issuances);
+  toast('혜택이 지급 대기로 등록되었습니다', 'success');
+  lookupMemberBenefits(); // 재조회
+}
+
+function addVisitRecord(memberHash, memberId, currentCount) {
+  const visits = getVisits();
+  // 오늘 같은 매장 방문 중복 체크 (하루 1회)
+  const today = new Date().toISOString().split('T')[0];
+  const exists = visits.some(v => v.memberHash === memberHash && v.storeId === currentStore?.id && (v.visitedAt||'').startsWith(today));
+  if (!exists) {
+    visits.push({
+      memberHash,
+      memberId,
+      storeId: currentStore?.id || 'STORE',
+      memberName: memberId,
+      visitedAt: new Date().toISOString(),
+      type: 'store_lookup'
+    });
+    saveVisits(visits);
+  }
 }
 
 /* ── Helpers ── */

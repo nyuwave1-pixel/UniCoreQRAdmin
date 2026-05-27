@@ -21,6 +21,26 @@
     .qr-token-code { font-family:monospace;font-size:11px;color:var(--gray-500);word-break:break-all;margin-top:10px;padding:8px 12px;background:var(--gray-100);border-radius:8px;display:inline-block;max-width:100%; }
     .hq-qr-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px; }
     .hq-qr-item { background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px;text-align:center; }
+
+    /* 혜택 관리 */
+    .benefit-type-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600; }
+    .bt-product { background:rgba(99,102,241,0.1);color:#6366f1; }
+    .bt-device  { background:rgba(14,165,233,0.1);color:#0ea5e9; }
+    .bt-health  { background:rgba(34,197,94,0.1);color:#16a34a; }
+    .bt-discount{ background:rgba(245,158,11,0.1);color:#d97706; }
+    .bt-custom  { background:rgba(100,116,139,0.1);color:#475569; }
+    .benefit-modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;padding:20px; }
+    .benefit-modal-overlay.show { display:flex; }
+    .benefit-modal { background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;padding:28px; }
+    .benefit-form-row { margin-bottom:16px; }
+    .benefit-form-label { display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px; }
+    .benefit-form-input { width:100%;padding:10px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;box-sizing:border-box; }
+    .benefit-form-input:focus { border-color:#6366f1; }
+    .benefit-form-select { width:100%;padding:10px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;cursor:pointer;box-sizing:border-box; }
+    .benefit-cond-badge { display:inline-flex;align-items:center;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(99,102,241,0.08);color:#6366f1; }
+    .issuance-status-pending { background:rgba(245,158,11,0.1);color:#d97706; }
+    .issuance-status-issued  { background:rgba(34,197,94,0.1);color:#16a34a; }
+    .issuance-status-cancelled { background:rgba(239,68,68,0.1);color:#dc2626; }
   </style>
 </head>
 <body>
@@ -170,6 +190,10 @@ async function checkAdminPw() {
       <a class="nav-item" data-section="derma-sessions">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         더마 세션 현황
+      </a>
+      <a class="nav-item" data-section="benefits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        혜택 관리
       </a>
       <a class="nav-item" data-section="store-mgmt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -550,6 +574,60 @@ async function checkAdminPw() {
       </div>
     </section>
 
+    <!-- BENEFITS MANAGEMENT -->
+    <section id="section-benefits" class="page-section">
+
+      <!-- 통계 -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+        <div class="stat-card"><div class="stat-value" id="bn-total">0</div><div class="stat-label">등록 혜택</div></div>
+        <div class="stat-card"><div class="stat-value" id="bn-active">0</div><div class="stat-label">활성 혜택</div></div>
+        <div class="stat-card"><div class="stat-value" id="bn-pending">0</div><div class="stat-label">지급 대기</div></div>
+        <div class="stat-card"><div class="stat-value" id="bn-issued">0</div><div class="stat-label">지급 완료</div></div>
+      </div>
+
+      <!-- 혜택 등록 목록 -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <h3>혜택 목록</h3>
+          <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" onclick="openBenefitModal()">+ 혜택 등록</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>혜택명</th><th>타입</th><th>조건</th><th>보상 내용</th><th>유효기간</th><th>상태</th><th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="benefits-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 지급 현황 -->
+      <div class="card">
+        <div class="card-header">
+          <h3>혜택 지급 현황</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="issuance-status-filter" onchange="renderIssuanceTable()" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:inherit">
+              <option value="all">전체</option>
+              <option value="pending">지급 대기</option>
+              <option value="issued">지급 완료</option>
+              <option value="cancelled">취소</option>
+            </select>
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="exportIssuances()">CSV 내보내기</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>혜택명</th><th>회원</th><th>매장</th><th>달성일</th><th>상태</th><th>지급일</th><th>액션</th></tr>
+            </thead>
+            <tbody id="issuances-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- STORE MANAGEMENT -->
     <section id="section-store-mgmt" class="page-section">
       <div class="toolbar">
@@ -585,6 +663,81 @@ async function checkAdminPw() {
 
   </div>
 </main>
+
+<!-- 혜택 등록 모달 -->
+<div class="benefit-modal-overlay" id="benefit-modal-overlay" onclick="if(event.target===this)closeBenefitModal()">
+  <div class="benefit-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h3 style="font-size:18px;font-weight:700" id="benefit-modal-title">혜택 등록</h3>
+      <button onclick="closeBenefitModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-400)">&times;</button>
+    </div>
+
+    <div class="benefit-form-row">
+      <label class="benefit-form-label">혜택명 *</label>
+      <input type="text" id="bf-name" class="benefit-form-input" placeholder="예: 5회 방문 기념 더마 세럼 증정">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="benefit-form-row">
+        <label class="benefit-form-label">혜택 타입 *</label>
+        <select id="bf-type" class="benefit-form-select" onchange="updateBenefitTypeUI()">
+          <option value="product">🛍 상품 제공</option>
+          <option value="device">💆 미용 기기 이용권</option>
+          <option value="health">🏆 헬스케어 현물 보상</option>
+          <option value="discount">🎁 할인 혜택</option>
+          <option value="custom">✏️ 직접 입력</option>
+        </select>
+      </div>
+      <div class="benefit-form-row">
+        <label class="benefit-form-label">달성 조건 *</label>
+        <select id="bf-cond-type" class="benefit-form-select">
+          <option value="visit_count">누적 방문 N회</option>
+          <option value="session_count">더마 세션 N회</option>
+          <option value="monthly_visit">이번 달 방문 N회</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="benefit-form-row">
+      <label class="benefit-form-label">조건 횟수 *</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="number" id="bf-cond-value" class="benefit-form-input" style="width:100px" value="5" min="1" max="999">
+        <span style="font-size:13px;color:var(--gray-500)" id="bf-cond-label">회 달성 시 혜택 지급</span>
+      </div>
+    </div>
+
+    <div class="benefit-form-row" id="bf-product-url-row">
+      <label class="benefit-form-label">상품 URL (unincore.com)</label>
+      <input type="url" id="bf-product-url" class="benefit-form-input" placeholder="https://www.unincore.com/product/...">
+    </div>
+
+    <div class="benefit-form-row">
+      <label class="benefit-form-label">보상 내용 (상세) *</label>
+      <input type="text" id="bf-reward-detail" class="benefit-form-input" placeholder="예: DermaHome 세럼 30ml 1개 증정">
+    </div>
+
+    <div class="benefit-form-row">
+      <label class="benefit-form-label">메모 (내부용)</label>
+      <input type="text" id="bf-notes" class="benefit-form-input" placeholder="관리자 메모 (선택)">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="benefit-form-row">
+        <label class="benefit-form-label">유효 시작일</label>
+        <input type="date" id="bf-valid-from" class="benefit-form-input">
+      </div>
+      <div class="benefit-form-row">
+        <label class="benefit-form-label">유효 종료일</label>
+        <input type="date" id="bf-valid-to" class="benefit-form-input">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" onclick="saveBenefit()" style="flex:1">저장</button>
+      <button class="btn btn-secondary" onclick="closeBenefitModal()">취소</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast-container"></div>
 
@@ -640,7 +793,7 @@ function showSection(name) {
   document.getElementById('section-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector('.nav-item[data-section="' + name + '"]')?.classList.add('active');
-  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-mgmt': 'QR 관리', 'qr-logs': 'QR 스캔 이력', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', 'store-mgmt': '매장 관리' };
+  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-mgmt': 'QR 관리', 'qr-logs': 'QR 스캔 이력', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', benefits: '혜택 관리', 'store-mgmt': '매장 관리' };
   document.querySelector('.header-title').textContent = titles[name] || '';
   if (name === 'dashboard') renderDashboard();
   else if (name === 'members') { memberPage = 0; filterMembers(); }
@@ -648,6 +801,7 @@ function showSection(name) {
   else if (name === 'qr-logs') renderQRLogs();
   else if (name === 'login-logs') renderLoginLogs();
   else if (name === 'derma-sessions') renderDermaSessions();
+  else if (name === 'benefits') renderBenefitsSection();
   else if (name === 'store-mgmt') renderStoreMgmt();
 }
 
@@ -1018,6 +1172,273 @@ function toast(msg, type) {
   el.textContent = msg;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+/* ════════════════════════════════════
+   BENEFITS MANAGEMENT (혜택 관리)
+════════════════════════════════════ */
+
+const BENEFIT_TYPES = { product:'상품 제공', device:'미용 기기 이용권', health:'헬스케어 현물', discount:'할인 혜택', custom:'직접 입력' };
+const BENEFIT_TYPE_CLASS = { product:'bt-product', device:'bt-device', health:'bt-health', discount:'bt-discount', custom:'bt-custom' };
+const COND_LABELS = { visit_count:'누적 방문', session_count:'더마 세션', monthly_visit:'이번 달 방문' };
+const STORE_NAMES_B = { STORE001:'강남점', STORE002:'부산점', STORE003:'제주점', HQ:'본사' };
+
+let _editingBenefitId = null;
+
+function getBenefits() { return JSON.parse(localStorage.getItem('uc_benefits') || '[]'); }
+function saveBenefits(list) { localStorage.setItem('uc_benefits', JSON.stringify(list)); }
+function getIssuances() { return JSON.parse(localStorage.getItem('uc_issuances') || '[]'); }
+function saveIssuances(list) { localStorage.setItem('uc_issuances', JSON.stringify(list)); }
+function getVisits() { return JSON.parse(localStorage.getItem('uc_visits') || '[]'); }
+
+/* ── 메인 렌더 ── */
+function renderBenefitsSection() {
+  const benefits = getBenefits();
+  const issuances = getIssuances();
+  const active = benefits.filter(b => b.isActive).length;
+  const pending = issuances.filter(i => i.status === 'pending').length;
+  const issued = issuances.filter(i => i.status === 'issued').length;
+  document.getElementById('bn-total').textContent = benefits.length;
+  document.getElementById('bn-active').textContent = active;
+  document.getElementById('bn-pending').textContent = pending;
+  document.getElementById('bn-issued').textContent = issued;
+  renderBenefitsTable();
+  renderIssuanceTable();
+}
+
+/* ── 혜택 목록 ── */
+function renderBenefitsTable() {
+  const benefits = getBenefits();
+  const tbody = document.getElementById('benefits-table-body');
+  if (benefits.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--gray-400)">등록된 혜택이 없습니다. 혜택을 등록해보세요!</td></tr>';
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  tbody.innerHTML = benefits.map(b => {
+    const expired = b.validTo && b.validTo < today;
+    const condLabel = COND_LABELS[b.condition?.type] || '-';
+    const condVal = b.condition?.value || 0;
+    const statusBadge = !b.isActive
+      ? '<span class="badge badge-expired">비활성</span>'
+      : expired
+        ? '<span class="badge badge-expired">만료</span>'
+        : '<span class="badge badge-active">활성</span>';
+    return '<tr>' +
+      '<td><strong>' + esc(b.name) + '</strong>' + (b.notes ? '<br><span style="font-size:11px;color:var(--gray-400)">' + esc(b.notes) + '</span>' : '') + '</td>' +
+      '<td><span class="benefit-type-badge ' + (BENEFIT_TYPE_CLASS[b.type]||'bt-custom') + '">' + (BENEFIT_TYPES[b.type]||b.type) + '</span></td>' +
+      '<td><span class="benefit-cond-badge">' + condLabel + ' ' + condVal + '회</span></td>' +
+      '<td style="max-width:180px">' + esc(b.rewardDetail || '-') + (b.productUrl ? ' <a href="' + esc(b.productUrl) + '" target="_blank" style="font-size:11px;color:#6366f1">🔗</a>' : '') + '</td>' +
+      '<td style="font-size:12px;color:var(--gray-500)">' + (b.validFrom || '-') + ' ~<br>' + (b.validTo || '무기한') + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td><div style="display:flex;gap:4px">' +
+        '<button class="btn btn-sm btn-secondary" onclick="editBenefit(\'' + b.id + '\')" style="font-size:11px;padding:4px 8px">수정</button>' +
+        '<button class="btn btn-sm ' + (b.isActive ? 'btn-secondary' : 'btn-primary') + '" onclick="toggleBenefit(\'' + b.id + '\')" style="font-size:11px;padding:4px 8px">' + (b.isActive ? '비활성' : '활성화') + '</button>' +
+      '</div></td></tr>';
+  }).join('');
+}
+
+/* ── 지급 현황 테이블 ── */
+function renderIssuanceTable() {
+  const issuances = getIssuances();
+  const benefits = getBenefits();
+  const filter = document.getElementById('issuance-status-filter')?.value || 'all';
+  let list = filter === 'all' ? issuances : issuances.filter(i => i.status === filter);
+  list = list.sort((a,b) => (b.triggeredAt||0) - (a.triggeredAt||0));
+
+  const tbody = document.getElementById('issuances-table-body');
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--gray-400)">지급 이력이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.slice(0, 100).map(i => {
+    const benefit = benefits.find(b => b.id === i.benefitId);
+    const statusClass = { pending:'issuance-status-pending', issued:'issuance-status-issued', cancelled:'issuance-status-cancelled' }[i.status] || '';
+    const statusLabel = { pending:'지급 대기', issued:'지급 완료', cancelled:'취소' }[i.status] || i.status;
+    return '<tr>' +
+      '<td><strong>' + esc(i.benefitName) + '</strong>' + (benefit ? '<br><span class="benefit-type-badge ' + (BENEFIT_TYPE_CLASS[benefit.type]||'bt-custom') + '" style="margin-top:2px">' + (BENEFIT_TYPES[benefit.type]||benefit.type) + '</span>' : '') + '</td>' +
+      '<td>' + esc(i.memberName || '-') + '<br><code style="font-size:10px;color:var(--gray-400)">' + (i.memberHash||'').slice(0,10) + '...</code></td>' +
+      '<td>' + esc(STORE_NAMES_B[i.storeId] || i.storeId || '-') + '</td>' +
+      '<td>' + fmtDate(i.triggeredAt) + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td>' + (i.issuedAt ? fmtDate(i.issuedAt) : '-') + '</td>' +
+      '<td>' + (i.status === 'pending'
+        ? '<button class="btn btn-sm btn-primary" onclick="issueReward(\'' + i.id + '\')" style="font-size:11px;padding:4px 10px;background:#16a34a">지급 완료</button>'
+        : '') +
+      '</td></tr>';
+  }).join('');
+}
+
+/* ── 혜택 모달 ── */
+function openBenefitModal(id) {
+  _editingBenefitId = id || null;
+  const modal = document.getElementById('benefit-modal-overlay');
+  document.getElementById('benefit-modal-title').textContent = id ? '혜택 수정' : '혜택 등록';
+
+  // Set today as default valid-from
+  const today = new Date().toISOString().split('T')[0];
+  const yearEnd = new Date().getFullYear() + '-12-31';
+
+  if (id) {
+    const b = getBenefits().find(x => x.id === id);
+    if (b) {
+      document.getElementById('bf-name').value = b.name;
+      document.getElementById('bf-type').value = b.type;
+      document.getElementById('bf-cond-type').value = b.condition?.type || 'visit_count';
+      document.getElementById('bf-cond-value').value = b.condition?.value || 5;
+      document.getElementById('bf-product-url').value = b.productUrl || '';
+      document.getElementById('bf-reward-detail').value = b.rewardDetail || '';
+      document.getElementById('bf-notes').value = b.notes || '';
+      document.getElementById('bf-valid-from').value = b.validFrom || today;
+      document.getElementById('bf-valid-to').value = b.validTo || yearEnd;
+    }
+  } else {
+    document.getElementById('bf-name').value = '';
+    document.getElementById('bf-type').value = 'product';
+    document.getElementById('bf-cond-type').value = 'visit_count';
+    document.getElementById('bf-cond-value').value = 5;
+    document.getElementById('bf-product-url').value = '';
+    document.getElementById('bf-reward-detail').value = '';
+    document.getElementById('bf-notes').value = '';
+    document.getElementById('bf-valid-from').value = today;
+    document.getElementById('bf-valid-to').value = yearEnd;
+  }
+  updateBenefitTypeUI();
+  modal.classList.add('show');
+}
+
+function closeBenefitModal() {
+  document.getElementById('benefit-modal-overlay').classList.remove('show');
+  _editingBenefitId = null;
+}
+
+function updateBenefitTypeUI() {
+  const type = document.getElementById('bf-type').value;
+  document.getElementById('bf-product-url-row').style.display = type === 'product' ? '' : 'none';
+}
+
+function editBenefit(id) { openBenefitModal(id); }
+
+function saveBenefit() {
+  const name = document.getElementById('bf-name').value.trim();
+  const type = document.getElementById('bf-type').value;
+  const condType = document.getElementById('bf-cond-type').value;
+  const condValue = parseInt(document.getElementById('bf-cond-value').value) || 5;
+  const productUrl = document.getElementById('bf-product-url').value.trim();
+  const rewardDetail = document.getElementById('bf-reward-detail').value.trim();
+  const notes = document.getElementById('bf-notes').value.trim();
+  const validFrom = document.getElementById('bf-valid-from').value;
+  const validTo = document.getElementById('bf-valid-to').value;
+
+  if (!name) { toast('혜택명을 입력하세요', 'error'); return; }
+  if (!rewardDetail) { toast('보상 내용을 입력하세요', 'error'); return; }
+
+  const benefits = getBenefits();
+  if (_editingBenefitId) {
+    const idx = benefits.findIndex(b => b.id === _editingBenefitId);
+    if (idx !== -1) {
+      benefits[idx] = { ...benefits[idx], name, type, condition: { type: condType, value: condValue }, productUrl, rewardDetail, notes, validFrom, validTo };
+    }
+    toast('혜택이 수정되었습니다', 'success');
+  } else {
+    benefits.push({
+      id: 'BN' + Date.now(),
+      name, type,
+      condition: { type: condType, value: condValue },
+      productUrl, rewardDetail, notes, validFrom, validTo,
+      isActive: true,
+      createdAt: Date.now()
+    });
+    toast('혜택이 등록되었습니다', 'success');
+  }
+  saveBenefits(benefits);
+  closeBenefitModal();
+  renderBenefitsSection();
+}
+
+function toggleBenefit(id) {
+  const benefits = getBenefits();
+  const b = benefits.find(x => x.id === id);
+  if (b) { b.isActive = !b.isActive; }
+  saveBenefits(benefits);
+  renderBenefitsSection();
+  toast(b?.isActive ? '혜택이 활성화되었습니다' : '혜택이 비활성화되었습니다', 'success');
+}
+
+/* ── 혜택 지급 처리 ── */
+function issueReward(issuanceId) {
+  const issuances = getIssuances();
+  const i = issuances.find(x => x.id === issuanceId);
+  if (!i) return;
+  i.status = 'issued';
+  i.issuedAt = Date.now();
+  i.issuedBy = 'admin';
+  saveIssuances(issuances);
+  renderBenefitsSection();
+  toast('혜택 지급이 완료 처리되었습니다', 'success');
+}
+
+/* ── 방문 기록 기반 혜택 자동 체크 ── */
+function checkAndCreateIssuances() {
+  const benefits = getBenefits().filter(b => b.isActive);
+  const visits = getVisits();
+  const sessions = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
+  const issuances = getIssuances();
+  const today = new Date();
+  const thisMonth = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0');
+  let added = 0;
+
+  // Get unique member hashes from visits
+  const memberHashes = [...new Set(visits.map(v => v.memberHash).filter(Boolean))];
+
+  memberHashes.forEach(mHash => {
+    const memberVisits = visits.filter(v => v.memberHash === mHash);
+    const memberSessions = sessions.filter(s => s.memberHash === mHash || (s.memberId && s.memberId !== 'GUEST'));
+    const monthlyVisits = memberVisits.filter(v => (v.visitedAt||'').slice(0,7) === thisMonth);
+    const lastVisit = memberVisits.sort((a,b) => (b.visitedAt||'').localeCompare(a.visitedAt))[0];
+    const memberName = lastVisit?.memberName || '-';
+    const storeId = lastVisit?.storeId || 'HQ';
+
+    benefits.forEach(b => {
+      let condMet = false;
+      if (b.condition?.type === 'visit_count') condMet = memberVisits.length >= b.condition.value;
+      else if (b.condition?.type === 'session_count') condMet = memberSessions.length >= b.condition.value;
+      else if (b.condition?.type === 'monthly_visit') condMet = monthlyVisits.length >= b.condition.value;
+
+      if (condMet) {
+        const alreadyIssued = issuances.some(i => i.benefitId === b.id && i.memberHash === mHash && ['pending','issued'].includes(i.status));
+        if (!alreadyIssued) {
+          issuances.push({
+            id: 'BI' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+            benefitId: b.id,
+            benefitName: b.name,
+            memberHash: mHash,
+            memberName,
+            storeId,
+            status: 'pending',
+            triggeredAt: Date.now()
+          });
+          added++;
+        }
+      }
+    });
+  });
+
+  if (added > 0) {
+    saveIssuances(issuances);
+    toast(added + '건의 신규 혜택 달성이 감지되었습니다!', 'success');
+  }
+  return added;
+}
+
+function exportIssuances() {
+  const issuances = getIssuances();
+  let csv = '﻿혜택명,회원해시,회원명,매장,달성일,상태,지급일\n';
+  issuances.forEach(i => {
+    csv += '"' + (i.benefitName||'') + '",' + (i.memberHash||'').slice(0,10) + '...,"' + (i.memberName||'') + '",' + (STORE_NAMES_B[i.storeId]||i.storeId||'-') + ',' + fmtDate(i.triggeredAt) + ',' + ({ pending:'지급대기', issued:'지급완료', cancelled:'취소' }[i.status]||i.status) + ',' + (i.issuedAt ? fmtDate(i.issuedAt) : '-') + '\n';
+  });
+  downloadCSV(csv, 'benefit_issuances_' + new Date().toISOString().split('T')[0] + '.csv');
+  toast('CSV 다운로드 완료', 'success');
 }
 
 /* ════════════════════════════════════

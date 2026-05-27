@@ -497,14 +497,71 @@ async function handleMBToken(token) {
 
 function confirmMemberScan() {
   logScanAction('member_qr_confirmed', { hash: activeMemberHash });
+
+  // 방문 기록 누적
+  const visits = JSON.parse(localStorage.getItem('uc_visits') || '[]');
+  const today = new Date().toISOString().split('T')[0];
+  const storeId = activeStoreId || getStoreFromUrl() || 'HQ';
+  const exists = visits.some(v => v.memberHash === activeMemberHash && v.storeId === storeId && (v.visitedAt||'').startsWith(today));
+  if (!exists) {
+    visits.push({
+      memberHash: activeMemberHash,
+      memberName: activeMemberData?.n || '-',
+      storeId,
+      visitedAt: new Date().toISOString(),
+      type: 'MB'
+    });
+    localStorage.setItem('uc_visits', JSON.stringify(visits));
+  }
+
+  // 방문 횟수 + 혜택 달성 체크
+  const memberVisits = visits.filter(v => v.memberHash === activeMemberHash);
+  const visitCount = memberVisits.length;
+  const benefits = JSON.parse(localStorage.getItem('uc_benefits') || '[]').filter(b => b.isActive);
+  const issuances = JSON.parse(localStorage.getItem('uc_issuances') || '[]');
+  const newRewards = [];
+
+  benefits.forEach(b => {
+    if (b.condition?.type !== 'visit_count') return;
+    const met = visitCount >= b.condition.value;
+    if (met) {
+      const already = issuances.some(i => i.benefitId === b.id && i.memberHash === activeMemberHash && ['pending','issued'].includes(i.status));
+      if (!already) {
+        const newIssuance = {
+          id: 'BI' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+          benefitId: b.id,
+          benefitName: b.name,
+          memberHash: activeMemberHash,
+          memberName: activeMemberData?.n || '-',
+          storeId,
+          status: 'pending',
+          triggeredAt: Date.now()
+        };
+        issuances.push(newIssuance);
+        newRewards.push(b.name);
+      }
+    }
+  });
+  if (newRewards.length > 0) {
+    localStorage.setItem('uc_issuances', JSON.stringify(issuances));
+  }
+
+  // 완료 화면
   document.getElementById('complete-title').textContent = '회원 QR 확인 완료';
   document.getElementById('complete-msg').textContent = '사용자 QR이 성공적으로 확인되었습니다.';
+  const visitBadge = '<div style="margin-top:12px;padding:10px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);border-radius:10px;text-align:center">' +
+    '<div style="font-size:22px;font-weight:800;color:#6366f1">' + visitCount + '<span style="font-size:13px;font-weight:400;color:var(--derma-text-3)">회</span></div>' +
+    '<div style="font-size:11px;color:var(--derma-text-3)">누적 방문 횟수</div>' +
+    (newRewards.length > 0 ? '<div style="margin-top:8px;padding:8px;background:#fef9c3;border-radius:8px;font-size:12px;color:#d97706;font-weight:600">🎉 혜택 달성! ' + newRewards.join(', ') + '</div>' : '') +
+    '</div>';
   document.getElementById('complete-summary').innerHTML =
     row('QR 유형', '사용자 QR (MB)') +
     (activeMemberData ? row('회원명', esc(activeMemberData.n || '-')) : row('해시 ID', '<code>' + activeMemberHash + '</code>')) +
-    row('확인 시간', new Date().toLocaleString('ko-KR'));
+    row('매장', esc(storeId)) +
+    row('확인 시간', new Date().toLocaleString('ko-KR')) +
+    visitBadge;
   showStep('step-complete');
-  toast('회원 확인 완료!', 'success');
+  toast(newRewards.length > 0 ? '🎉 혜택 달성! ' + newRewards[0] : '회원 확인 완료!', 'success');
 }
 
 /* ── Derma Form Helpers ── */
