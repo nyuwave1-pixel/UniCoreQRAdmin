@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNI&CORE - QR 스캔 & 더마 기기 사용</title>
+  <title>UNI&CORE - QR 스캔</title>
   <link rel="stylesheet" href="../css/scan.css">
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
@@ -15,289 +15,232 @@
     <span class="logo-text">UNI&CORE</span>
   </div>
 
-  <!-- STEP 1: Member Verification -->
-  <div id="step-verify" class="step">
-    <div class="info-card">
-      <div class="icon-wrap">&#128274;</div>
-      <h2>회원 인증 & QR 스캔</h2>
-      <p>회원번호 인증 후 본사 QR을 스캔하여 더마 기기 사용 권한을 받으세요.</p>
-    </div>
-
-    <div class="main-card">
-      <div class="main-card-body">
-        <div id="verify-form">
-          <div class="form-section">
-            <div class="form-section-title">1. 회원 인증</div>
-            <input type="text" id="scan-member-id" class="note-input" style="min-height:auto;text-align:center;font-size:16px;letter-spacing:.05em" placeholder="회원번호를 입력하세요" inputmode="numeric">
-          </div>
-          <button class="btn-derma" onclick="verifyMember()" id="verify-btn">회원 인증하기</button>
-          <div id="verify-error" style="display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.25);color:#f472b6;font-size:13px;text-align:center"></div>
-        </div>
-
-        <!-- Verified member info -->
-        <div id="verified-info" style="display:none">
-          <div class="member-info-card">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(92,138,60,0.15);display:flex;align-items:center;justify-content:center;font-size:18px">&#10003;</div>
-              <div>
-                <div style="font-size:15px;font-weight:700" id="v-name">-</div>
-                <div style="font-size:12px;color:var(--derma-text-3)">회원 인증 완료</div>
-              </div>
-            </div>
-            <div class="info-row"><span class="info-label">회원번호</span><span class="info-value" id="v-id">-</span></div>
-            <div class="info-row"><span class="info-label">국가</span><span class="info-value" id="v-country">-</span></div>
-            <div class="info-row"><span class="info-label">연락처</span><span class="info-value" id="v-phone">-</span></div>
-            <div class="info-row"><span class="info-label">이메일</span><span class="info-value" id="v-email">-</span></div>
-          </div>
-
-          <div class="form-section" style="margin-top:20px">
-            <div class="form-section-title">2. QR 스캔 방법 선택</div>
-            <button class="btn-derma" onclick="startHQScan()" style="margin-bottom:10px">&#128247; 본사 QR 코드 스캔하기</button>
-            <button class="btn-secondary-derma" onclick="showManualEntry()">코드 직접 입력</button>
-          </div>
-
-          <!-- Manual Code Entry -->
-          <div id="manual-entry" style="display:none;margin-top:16px">
-            <input type="text" id="manual-code" class="note-input" style="min-height:auto;text-align:center;font-family:monospace;letter-spacing:.1em;font-size:14px" placeholder="QR 코드를 입력하세요 (UC...)">
-            <button class="btn-derma" onclick="submitManualCode()" style="margin-top:10px">인증하기</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- STEP 2: QR Scanning / Camera -->
-  <div id="step-scan" class="step" style="display:none">
+  <!-- STEP 1: Camera Scan -->
+  <div id="step-scan" class="step">
     <div class="info-card">
       <div class="icon-wrap">&#128247;</div>
       <h2>QR 코드 스캔</h2>
-      <p>본사에서 생성한 QR 코드를 카메라로 스캔하세요.</p>
+      <p>본사 QR, 매장 QR, 사용자 QR 모두 스캔 가능합니다.</p>
     </div>
     <div class="main-card">
       <div class="main-card-body">
+        <!-- QR Type Badges -->
+        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2)">HQ 본사 QR</span>
+          <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2)">ST 매장 QR</span>
+          <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(92,138,60,0.1);color:#5c8a3c;border:1px solid rgba(92,138,60,0.2)">MB 사용자 QR</span>
+        </div>
+
         <div id="camera-area" style="width:100%;aspect-ratio:1;background:#000;border-radius:12px;overflow:hidden;position:relative;margin-bottom:16px">
           <video id="scan-video" style="width:100%;height:100%;object-fit:cover" autoplay playsinline></video>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
-            <div style="width:200px;height:200px;border:2px solid rgba(157,212,112,0.5);border-radius:16px"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+            <div style="width:200px;height:200px;border:2px solid rgba(157,212,112,0.6);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0.35)"></div>
+          </div>
+          <div id="scan-status-overlay" style="position:absolute;bottom:16px;left:0;right:0;text-align:center">
+            <span style="background:rgba(0,0,0,0.6);color:#fff;font-size:12px;padding:4px 12px;border-radius:20px">QR 코드를 사각형 안에 맞춰주세요</span>
           </div>
         </div>
-        <p style="text-align:center;font-size:13px;color:var(--derma-text-3);margin-bottom:16px">QR 코드를 카메라에 비춰주세요</p>
-        <button class="btn-secondary-derma" onclick="cancelScan()">취소</button>
+
+        <button class="btn-secondary-derma" onclick="showManualEntry()" style="margin-bottom:10px">코드 직접 입력</button>
+
+        <div id="manual-entry" style="display:none;margin-top:12px">
+          <input type="text" id="manual-code" class="note-input" style="min-height:auto;text-align:center;font-family:monospace;letter-spacing:.08em;font-size:13px" placeholder="HQ-... / ST-... / MB-...">
+          <button class="btn-derma" onclick="submitManualCode()" style="margin-top:10px">확인</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- STEP 3: Scan Processing -->
+  <!-- STEP 2: Processing -->
   <div id="step-processing" class="step" style="display:none">
     <div class="main-card">
       <div class="main-card-body" style="text-align:center;padding:48px 24px">
         <div style="width:64px;height:64px;border-radius:16px;background:rgba(92,138,60,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;animation:spin 1s linear infinite">&#8634;</div>
-        <h3 style="font-size:16px;margin-bottom:8px">QR 인증 처리 중</h3>
-        <p style="font-size:13px;color:var(--derma-text-3)">잠시만 기다려주세요...</p>
-        <div style="margin-top:20px;text-align:left;max-width:200px;margin-left:auto;margin-right:auto">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3);margin-bottom:8px"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite"></span> QR 코드 검증 중</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3);margin-bottom:8px"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite;animation-delay:.3s"></span> 기기 사용 권한 확인</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--derma-text-3)"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:#5c8a3c;animation:pulse 1.5s ease-in-out infinite;animation-delay:.6s"></span> 세션 활성화 중</div>
-        </div>
+        <h3 style="font-size:16px;margin-bottom:8px">QR 코드 처리 중</h3>
+        <p style="font-size:13px;color:var(--derma-text-3)" id="processing-msg">유형을 확인하는 중...</p>
       </div>
     </div>
   </div>
 
-  <!-- STEP 4: Derma Detail Form -->
-  <div id="step-detail" class="step" style="display:none">
-    <div class="info-card">
-      <div class="icon-wrap">&#129658;</div>
-      <h2>더마 기기 사용 정보</h2>
-      <p>사용할 기기와 시술 부위를 선택해주세요.</p>
+  <!-- STEP 3A: HQ QR Result → Derma session form -->
+  <div id="step-hq" class="step" style="display:none">
+    <div class="info-card" style="background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.2)">
+      <div class="icon-wrap" style="background:rgba(99,102,241,0.12);color:#6366f1">&#127968;</div>
+      <h2>본사 QR 확인됨</h2>
+      <p id="hq-token-display" style="font-family:monospace;font-size:12px;color:var(--derma-text-3)"></p>
     </div>
 
     <div class="main-card">
       <div class="main-card-body">
-        <div class="derma-form">
-          <!-- Device Selection -->
+        <!-- Member verification for HQ scan -->
+        <div id="hq-verify-form">
           <div class="form-section">
-            <div class="form-section-title">사용 기기</div>
-            <div class="device-grid" id="device-grid">
-              <div class="device-card" onclick="selectDevice(this, 'dermahome10')" data-device="dermahome10">
-                <div class="device-icon">&#129658;</div>
-                <div class="device-name">DermaHome 10</div>
-                <div class="device-desc">홈케어 더마 기기</div>
-              </div>
-              <div class="device-card" onclick="selectDevice(this, 'dermahome-pro')" data-device="dermahome-pro">
-                <div class="device-icon">&#128161;</div>
-                <div class="device-name">DermaHome Pro</div>
-                <div class="device-desc">전문가용 더마 기기</div>
-              </div>
-              <div class="device-card" onclick="selectDevice(this, 'derma-led')" data-device="derma-led">
-                <div class="device-icon">&#10024;</div>
-                <div class="device-name">Derma LED</div>
-                <div class="device-desc">LED 광선 치료기</div>
-              </div>
-              <div class="device-card" onclick="selectDevice(this, 'scalp-care')" data-device="scalp-care">
-                <div class="device-icon">&#128135;</div>
-                <div class="device-name">Scalp Care</div>
-                <div class="device-desc">두피 관리 전용 기기</div>
-              </div>
-            </div>
+            <div class="form-section-title">회원 확인 (선택)</div>
+            <input type="text" id="hq-member-id" class="note-input" style="min-height:auto;text-align:center;font-size:16px" placeholder="회원번호 입력 (스킵 가능)" inputmode="numeric">
           </div>
-
-          <!-- Treatment Area -->
-          <div class="form-section">
-            <div class="form-section-title">시술 부위 (복수 선택 가능)</div>
-            <div class="area-tags" id="area-tags">
-              <button class="area-tag face" onclick="toggleArea(this, 'face')">&#128102; 얼굴</button>
-              <button class="area-tag face" onclick="toggleArea(this, 'forehead')">이마</button>
-              <button class="area-tag face" onclick="toggleArea(this, 'cheek')">볼</button>
-              <button class="area-tag face" onclick="toggleArea(this, 'chin')">턱</button>
-              <button class="area-tag face" onclick="toggleArea(this, 'neck-face')">목</button>
-              <button class="area-tag body" onclick="toggleArea(this, 'body')">&#128170; 바디</button>
-              <button class="area-tag body" onclick="toggleArea(this, 'arm')">팔</button>
-              <button class="area-tag body" onclick="toggleArea(this, 'leg')">다리</button>
-              <button class="area-tag body" onclick="toggleArea(this, 'back')">등</button>
-              <button class="area-tag body" onclick="toggleArea(this, 'abdomen')">복부</button>
-              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp')">&#128135; 두피</button>
-              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp-front')">전두부</button>
-              <button class="area-tag scalp" onclick="toggleArea(this, 'scalp-top')">정수리</button>
-            </div>
-          </div>
-
-          <!-- Duration -->
-          <div class="form-section">
-            <div class="form-section-title">사용 시간 (분)</div>
-            <div style="display:flex;gap:8px">
-              <button class="area-tag" onclick="selectDuration(this, 10)" data-dur="10">10분</button>
-              <button class="area-tag" onclick="selectDuration(this, 20)" data-dur="20">20분</button>
-              <button class="area-tag" onclick="selectDuration(this, 30)" data-dur="30">30분</button>
-              <button class="area-tag" onclick="selectDuration(this, 60)" data-dur="60">60분</button>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div class="form-section">
-            <div class="form-section-title">메모 (선택)</div>
-            <textarea class="note-input" id="session-notes" placeholder="시술 관련 메모를 입력하세요..."></textarea>
-          </div>
+          <button class="btn-derma" onclick="proceedHQSession()" style="margin-bottom:8px">더마 세션 기록 시작</button>
+          <button class="btn-secondary-derma" onclick="resetScan()">다시 스캔</button>
         </div>
       </div>
-      <div class="main-card-footer">
-        <button class="btn-derma" onclick="submitDermaSession()" id="submit-session-btn">더마 세션 완료 & 기록 저장</button>
+    </div>
+
+    <!-- Derma detail form -->
+    <div id="hq-detail-form" style="display:none">
+      <div class="main-card" style="margin-top:16px">
+        <div class="main-card-body">
+          <div class="form-section">
+            <div class="form-section-title">사용 기기</div>
+            <div class="device-grid" id="hq-device-grid">
+              <div class="device-card" onclick="selectDevice(this,'dermahome10')" data-device="dermahome10"><div class="device-icon">&#129658;</div><div class="device-name">DermaHome 10</div><div class="device-desc">홈케어</div></div>
+              <div class="device-card" onclick="selectDevice(this,'dermahome-pro')" data-device="dermahome-pro"><div class="device-icon">&#128161;</div><div class="device-name">DermaHome Pro</div><div class="device-desc">전문가용</div></div>
+              <div class="device-card" onclick="selectDevice(this,'derma-led')" data-device="derma-led"><div class="device-icon">&#10024;</div><div class="device-name">Derma LED</div><div class="device-desc">LED 광선</div></div>
+              <div class="device-card" onclick="selectDevice(this,'scalp-care')" data-device="scalp-care"><div class="device-icon">&#128135;</div><div class="device-name">Scalp Care</div><div class="device-desc">두피 전용</div></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">시술 부위 (복수 선택)</div>
+            <div class="area-tags">
+              <button class="area-tag face" onclick="toggleArea(this,'face')">&#128102; 얼굴</button>
+              <button class="area-tag face" onclick="toggleArea(this,'forehead')">이마</button>
+              <button class="area-tag face" onclick="toggleArea(this,'cheek')">볼</button>
+              <button class="area-tag face" onclick="toggleArea(this,'chin')">턱</button>
+              <button class="area-tag face" onclick="toggleArea(this,'neck-face')">목</button>
+              <button class="area-tag body" onclick="toggleArea(this,'body')">&#128170; 바디</button>
+              <button class="area-tag body" onclick="toggleArea(this,'arm')">팔</button>
+              <button class="area-tag body" onclick="toggleArea(this,'leg')">다리</button>
+              <button class="area-tag body" onclick="toggleArea(this,'back')">등</button>
+              <button class="area-tag scalp" onclick="toggleArea(this,'scalp')">&#128135; 두피</button>
+              <button class="area-tag scalp" onclick="toggleArea(this,'scalp-front')">전두부</button>
+              <button class="area-tag scalp" onclick="toggleArea(this,'scalp-top')">정수리</button>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">사용 시간</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="area-tag" onclick="selectDuration(this,10)" data-dur="10">10분</button>
+              <button class="area-tag" onclick="selectDuration(this,20)" data-dur="20">20분</button>
+              <button class="area-tag" onclick="selectDuration(this,30)" data-dur="30">30분</button>
+              <button class="area-tag" onclick="selectDuration(this,60)" data-dur="60">60분</button>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">메모 (선택)</div>
+            <textarea class="note-input" id="session-notes" placeholder="시술 관련 메모..."></textarea>
+          </div>
+        </div>
+        <div class="main-card-footer">
+          <button class="btn-derma" onclick="submitDermaSession()">세션 기록 저장</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- STEP 5: Completion -->
+  <!-- STEP 3B: ST (Store) QR -->
+  <div id="step-st" class="step" style="display:none">
+    <div class="info-card" style="background:rgba(14,165,233,0.08);border-color:rgba(14,165,233,0.2)">
+      <div class="icon-wrap" style="background:rgba(14,165,233,0.12);color:#0ea5e9">&#127978;</div>
+      <h2>매장 QR 확인됨</h2>
+      <p id="st-store-display"></p>
+    </div>
+    <div class="main-card">
+      <div class="main-card-body">
+        <div class="member-info-card" id="st-info"></div>
+        <div style="margin-top:16px">
+          <button class="btn-derma" onclick="recordStoreVisit()" style="margin-bottom:8px">매장 방문 기록</button>
+          <button class="btn-secondary-derma" onclick="resetScan()">다시 스캔</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3C: MB (Member) QR -->
+  <div id="step-mb" class="step" style="display:none">
+    <div class="info-card" style="background:rgba(92,138,60,0.08);border-color:rgba(92,138,60,0.25)">
+      <div class="icon-wrap" style="background:rgba(92,138,60,0.12);color:#5c8a3c">&#128100;</div>
+      <h2>사용자 QR 확인됨</h2>
+      <p id="mb-expiry-display" style="font-size:12px;color:var(--derma-text-3)"></p>
+    </div>
+    <div class="main-card">
+      <div class="main-card-body">
+        <div id="mb-member-info" class="member-info-card"></div>
+        <div id="mb-not-found" style="display:none;padding:20px;text-align:center;color:var(--derma-text-3);font-size:13px">
+          회원 정보를 찾을 수 없습니다<br><span style="font-size:11px;opacity:.7">해시 ID로만 확인됩니다</span>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn-derma" onclick="confirmMemberScan()" style="margin-bottom:8px">회원 확인 완료</button>
+          <button class="btn-secondary-derma" onclick="resetScan()">다시 스캔</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Error -->
+  <div id="step-error" class="step" style="display:none">
+    <div class="main-card">
+      <div class="main-card-body" style="text-align:center;padding:40px 24px">
+        <div style="width:64px;height:64px;border-radius:16px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px">&#10007;</div>
+        <h3 style="font-size:16px;margin-bottom:8px;color:#ef4444">QR 코드 오류</h3>
+        <p style="font-size:13px;color:var(--derma-text-3)" id="error-msg">유효하지 않은 QR 코드입니다.</p>
+      </div>
+      <div class="main-card-footer">
+        <button class="btn-derma" onclick="resetScan()">다시 스캔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Complete -->
   <div id="step-complete" class="step" style="display:none">
     <div class="main-card">
       <div class="main-card-body">
         <div class="scan-result success">
           <div class="result-icon">&#10003;</div>
-          <h3>더마 세션 기록 완료!</h3>
-          <p>기기 사용 정보가 성공적으로 저장되었습니다.</p>
+          <h3 id="complete-title">완료!</h3>
+          <p id="complete-msg"></p>
         </div>
-
-        <div class="member-info-card" id="session-summary" style="margin-top:20px"></div>
+        <div class="member-info-card" id="complete-summary" style="margin-top:20px"></div>
       </div>
       <div class="main-card-footer">
-        <button class="btn-derma" onclick="resetAll()">새 세션 시작</button>
-        <button class="btn-secondary-derma" onclick="location.href='../index.html'">홈으로 돌아가기</button>
+        <button class="btn-derma" onclick="resetScan()">새 스캔</button>
+        <button class="btn-secondary-derma" onclick="location.href='../index.html'">홈으로</button>
       </div>
     </div>
   </div>
+
 </div>
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 const SALT = 'unicore-qr-2026-salt-key';
-const HQ_BASE = 'https://unicore-dermahome-qr.netlify.app';
-
-let loginIndex = null;
 let memberDisplay = null;
-let currentHash = null;
-let currentMemberId = null;
-let currentDisplay = null;
+let videoStream = null;
+let _scanActive = false;
+
+// Session state
+let activeQRType = null;   // 'HQ' | 'ST' | 'MB'
+let activeToken = null;
+let activeStoreId = null;
+let activeMemberHash = null;
+let activeMemberData = null;
 let selectedDevice = null;
 let selectedAreas = [];
 let selectedDuration = null;
-let scannedQRToken = null;
+let hqMemberId = null;
+let hqMemberDisplay = null;
 
-async function hashMemberId(id) {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(SALT + String(id)));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 16);
-}
-
-async function loadSecureData() {
-  if (!loginIndex) { loginIndex = await (await fetch('../data/login-index.json')).json(); }
-  if (!memberDisplay) { memberDisplay = await (await fetch('../data/member-display.json')).json(); }
-}
-
-/* ── Step 1: Verify Member ── */
-async function verifyMember() {
-  const input = document.getElementById('scan-member-id');
-  const errorEl = document.getElementById('verify-error');
-  const rawId = input.value.trim();
-
-  if (!rawId) { showVerifyError('회원번호를 입력하세요'); return; }
-
-  try {
-    await loadSecureData();
-    const hash = await hashMemberId(rawId);
-    const entry = loginIndex[hash];
-
-    if (!entry) { showVerifyError('등록되지 않은 회원번호입니다'); return; }
-    if (entry.s !== 1) { showVerifyError('비활성 상태의 계정입니다'); return; }
-
-    const display = memberDisplay[hash];
-    if (!display) { showVerifyError('회원 정보를 찾을 수 없습니다'); return; }
-
-    currentHash = hash;
-    currentMemberId = rawId;
-    currentDisplay = display;
-
-    document.getElementById('v-name').textContent = display.n || '-';
-    document.getElementById('v-id').textContent = rawId;
-    const cMap = { KR: '한국', US: '미국', JP: '일본', CN: '중국' };
-    document.getElementById('v-country').textContent = cMap[display.c] || display.c || '-';
-    document.getElementById('v-phone').textContent = display.p || '-';
-    document.getElementById('v-email').textContent = display.e || '-';
-
-    document.getElementById('verify-form').style.display = 'none';
-    document.getElementById('verified-info').style.display = 'block';
-    errorEl.style.display = 'none';
-
-    logAction('member_verified', { hash, country: display.c });
-  } catch (err) {
-    showVerifyError('데이터를 불러오는데 실패했습니다');
-  }
-}
-
-function showVerifyError(msg) {
-  const el = document.getElementById('verify-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-/* ── Step 2: QR Scan ── */
-function startHQScan() {
-  showStep('step-scan');
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
   startCamera();
-}
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) { stopCamera(); handleQRToken(code); }
+  else {
+    const store = params.get('store');
+    if (store) activeStoreId = store;
+  }
+});
 
-function showManualEntry() {
-  document.getElementById('manual-entry').style.display = 'block';
-}
-
-async function submitManualCode() {
-  const code = document.getElementById('manual-code').value.trim();
-  if (!code) return;
-  scannedQRToken = code;
-  await processQRToken(code);
-}
-
-let videoStream = null;
-let _qrScanActive = false;
-
+/* ── Camera ── */
 function startCamera() {
   const video = document.getElementById('scan-video');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } })
@@ -305,104 +248,266 @@ function startCamera() {
       videoStream = stream;
       video.srcObject = stream;
       video.play();
-      _qrScanActive = true;
-      pollForQR(video);
+      _scanActive = true;
+      scanLoop(video);
     })
     .catch(() => {
-      toast('카메라 접근이 거부되었습니다. 코드를 직접 입력해주세요.', 'error');
-      cancelScan();
+      document.getElementById('scan-status-overlay').innerHTML =
+        '<span style="background:rgba(239,68,68,0.8);color:#fff;font-size:12px;padding:4px 12px;border-radius:20px">카메라 접근 불가 — 코드를 직접 입력하세요</span>';
       showManualEntry();
     });
 }
 
 function stopCamera() {
-  _qrScanActive = false;
-  if (videoStream) {
-    videoStream.getTracks().forEach(t => t.stop());
-    videoStream = null;
-  }
+  _scanActive = false;
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
 }
 
-function pollForQR(video) {
-  if (!_qrScanActive) return;
-  if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-    requestAnimationFrame(() => pollForQR(video));
-    return;
-  }
-
+function scanLoop(video) {
+  if (!_scanActive) return;
+  if (video.readyState < video.HAVE_ENOUGH_DATA) { requestAnimationFrame(() => scanLoop(video)); return; }
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-
   const tick = () => {
-    if (!_qrScanActive) return;
+    if (!_scanActive) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
     if (code && code.data) {
-      // QR 코드 감지 성공
-      _qrScanActive = false;
       stopCamera();
-      scannedQRToken = code.data;
-      toast('QR 코드 감지됨!', 'success');
-      processQRToken(code.data);
+      toast('QR 감지!', 'success');
+      handleQRToken(code.data);
       return;
     }
-
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 }
 
-function cancelScan() {
-  _qrScanActive = false;
-  stopCamera();
-  showStep('step-verify');
+/* ── Manual Entry ── */
+function showManualEntry() {
+  document.getElementById('manual-entry').style.display = 'block';
 }
 
-/* ── Step 3: Process QR Token ── */
-async function processQRToken(token) {
+function submitManualCode() {
+  const code = document.getElementById('manual-code').value.trim();
+  if (!code) return;
+  stopCamera();
+  handleQRToken(code);
+}
+
+/* ── QR Type Router ── */
+async function handleQRToken(token) {
   showStep('step-processing');
+  activeToken = token;
 
-  try {
-    // Call HQ API to consume the QR token
-    const resp = await fetch(HQ_BASE + '/api/qr/consume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
+  await new Promise(r => setTimeout(r, 800));
 
-    // Simulate processing delay for UX
-    await new Promise(r => setTimeout(r, 1500));
-
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data.success) {
-        scannedQRToken = token;
-        logAction('qr_scanned', { token: token.slice(0, 12) + '...', hash: currentHash });
-        showStep('step-detail');
-        toast('QR 인증 성공! 기기 사용 정보를 입력해주세요.', 'success');
-        return;
-      }
-    }
-
-    // If HQ API fails or is unavailable, allow local-only mode
-    scannedQRToken = token;
-    logAction('qr_scanned_local', { token: token.slice(0, 12) + '...', hash: currentHash });
-    showStep('step-detail');
-    toast('QR 코드가 확인되었습니다.', 'success');
-  } catch (err) {
-    // Network error - allow offline/local mode
-    scannedQRToken = token || 'LOCAL_' + Date.now();
-    logAction('qr_offline_scan', { hash: currentHash });
-    showStep('step-detail');
-    toast('오프라인 모드: 기기 사용 정보를 입력하세요.', 'success');
+  if (token.startsWith('HQ-')) {
+    activeQRType = 'HQ';
+    handleHQToken(token);
+  } else if (token.startsWith('ST-')) {
+    activeQRType = 'ST';
+    handleSTToken(token);
+  } else if (token.startsWith('MB-')) {
+    activeQRType = 'MB';
+    await handleMBToken(token);
+  } else {
+    showError('인식할 수 없는 QR 코드 형식입니다.<br><small style="opacity:.6">HQ-, ST-, MB- 형식의 QR만 지원됩니다</small>');
   }
 }
 
-/* ── Step 4: Derma Detail ── */
+/* ── HQ QR ── */
+function handleHQToken(token) {
+  // Check if token exists in localStorage (generated by admin)
+  const hqTokens = JSON.parse(localStorage.getItem('hq_qr_tokens') || '{}');
+  const tokenData = hqTokens[token];
+
+  if (tokenData && tokenData.used) {
+    showError('이미 사용된 본사 QR 코드입니다.');
+    return;
+  }
+
+  document.getElementById('hq-token-display').textContent = token.slice(0, 20) + (token.length > 20 ? '...' : '');
+  showStep('step-hq');
+}
+
+async function proceedHQSession() {
+  const memberIdInput = document.getElementById('hq-member-id').value.trim();
+  hqMemberId = memberIdInput || null;
+
+  if (hqMemberId) {
+    try {
+      await loadMemberDisplay();
+      const hash = await hashId(hqMemberId);
+      hqMemberDisplay = memberDisplay ? memberDisplay[hash] : null;
+    } catch { hqMemberDisplay = null; }
+  }
+
+  document.getElementById('hq-verify-form').style.display = 'none';
+  document.getElementById('hq-detail-form').style.display = 'block';
+}
+
+function submitDermaSession() {
+  if (!selectedDevice) { toast('사용 기기를 선택하세요', 'error'); return; }
+  if (selectedAreas.length === 0) { toast('시술 부위를 선택하세요', 'error'); return; }
+  if (!selectedDuration) { toast('사용 시간을 선택하세요', 'error'); return; }
+
+  // Mark token as used
+  const hqTokens = JSON.parse(localStorage.getItem('hq_qr_tokens') || '{}');
+  if (hqTokens[activeToken]) {
+    hqTokens[activeToken].used = true;
+    hqTokens[activeToken].usedAt = Date.now();
+    localStorage.setItem('hq_qr_tokens', JSON.stringify(hqTokens));
+  }
+
+  const session = {
+    id: 'DS' + Date.now(),
+    memberHash: hqMemberId ? undefined : null,
+    memberId: hqMemberId || 'GUEST',
+    memberName: hqMemberDisplay?.n || (hqMemberId ? hqMemberId : '비회원'),
+    country: hqMemberDisplay?.c || '-',
+    qrToken: activeToken.slice(0, 16) + '...',
+    qrType: 'HQ',
+    device: selectedDevice,
+    areas: [...selectedAreas],
+    duration: selectedDuration,
+    notes: document.getElementById('session-notes').value.trim(),
+    storeId: activeStoreId || getStoreFromUrl() || 'HQ',
+    timestamp: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+  };
+
+  const sessions = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
+  sessions.push(session);
+  localStorage.setItem('derma_sessions', JSON.stringify(sessions));
+  logScanAction('hq_scan_complete', { token: activeToken.slice(0, 12) });
+
+  const DEVICE_NAMES = { 'dermahome10':'DermaHome 10','dermahome-pro':'DermaHome Pro','derma-led':'Derma LED','scalp-care':'Scalp Care' };
+  const AREA_NAMES = { face:'얼굴',forehead:'이마',cheek:'볼',chin:'턱','neck-face':'목',body:'바디',arm:'팔',leg:'다리',back:'등',abdomen:'복부',scalp:'두피','scalp-front':'전두부','scalp-top':'정수리' };
+
+  document.getElementById('complete-title').textContent = '더마 세션 기록 완료!';
+  document.getElementById('complete-msg').textContent = '기기 사용 정보가 저장되었습니다.';
+  document.getElementById('complete-summary').innerHTML =
+    row('세션 ID', '<code style="font-size:11px">' + session.id + '</code>') +
+    row('회원', esc(session.memberName) + (hqMemberId ? ' (' + hqMemberId + ')' : '')) +
+    row('기기', DEVICE_NAMES[selectedDevice] || selectedDevice) +
+    row('부위', selectedAreas.map(a => AREA_NAMES[a] || a).join(', ')) +
+    row('시간', selectedDuration + '분') +
+    row('일시', new Date(session.timestamp).toLocaleString('ko-KR'));
+  showStep('step-complete');
+  toast('세션 기록 완료!', 'success');
+}
+
+/* ── ST QR ── */
+function handleSTToken(token) {
+  // Format: ST-STORE001-XXXXXX
+  const parts = token.split('-');
+  // parts[0]=ST, parts[1]=STORE001, parts[2]=code
+  if (parts.length < 3) { showError('매장 QR 형식이 올바르지 않습니다.'); return; }
+  const storeCode = parts.slice(1, parts.length - 1).join('-');  // handles ST-STORE001-xxx
+  const code = parts[parts.length - 1];
+
+  const STORE_NAMES = {
+    'STORE001': '강남점 (서울)',
+    'STORE002': '부산점 (부산)',
+    'STORE003': '제주점 (제주)',
+  };
+
+  const storeName = STORE_NAMES[storeCode] || storeCode;
+  document.getElementById('st-store-display').textContent = storeName;
+
+  document.getElementById('st-info').innerHTML =
+    row('매장 코드', '<code>' + esc(storeCode) + '</code>') +
+    row('매장명', esc(storeName)) +
+    row('QR 코드', '<code style="font-size:11px">' + esc(code) + '</code>') +
+    row('스캔 시간', new Date().toLocaleString('ko-KR'));
+
+  activeStoreId = storeCode;
+  showStep('step-st');
+}
+
+function recordStoreVisit() {
+  logScanAction('store_qr_scan', { storeId: activeStoreId, token: activeToken.slice(0, 16) });
+  document.getElementById('complete-title').textContent = '매장 방문 기록 완료';
+  document.getElementById('complete-msg').textContent = activeStoreId + ' 방문이 기록되었습니다.';
+  document.getElementById('complete-summary').innerHTML =
+    row('매장', esc(activeStoreId)) +
+    row('QR 유형', '매장 QR (ST)') +
+    row('기록 시간', new Date().toLocaleString('ko-KR'));
+  showStep('step-complete');
+  toast('방문 기록 완료!', 'success');
+}
+
+/* ── MB QR ── */
+async function handleMBToken(token) {
+  // Format: MB-{hash16}-{expiry_base36}
+  const parts = token.split('-');
+  if (parts.length < 3) { showError('사용자 QR 형식이 올바르지 않습니다.'); return; }
+
+  const hash16 = parts[1];
+  const expiryB36 = parts[2];
+  const expiry = parseInt(expiryB36, 36);
+  const now = Date.now();
+
+  if (isNaN(expiry) || expiry < now) {
+    showError('만료된 사용자 QR 코드입니다.<br><small style="opacity:.6">회원이 새 QR 코드를 생성해야 합니다</small>');
+    return;
+  }
+
+  const remaining = expiry - now;
+  const hours = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  document.getElementById('mb-expiry-display').textContent =
+    '유효 기간: ' + (hours > 0 ? hours + '시간 ' : '') + mins + '분 남음';
+
+  activeMemberHash = hash16;
+
+  // Try to find member in memberDisplay
+  try {
+    await loadMemberDisplay();
+    const found = memberDisplay ? memberDisplay[hash16] : null;
+
+    if (found) {
+      activeMemberData = found;
+      const cMap = { KR: '한국', US: '미국', JP: '일본', CN: '중국', SG: '싱가포르' };
+      document.getElementById('mb-member-info').innerHTML =
+        row('이름', esc(found.n || '-')) +
+        row('국가', cMap[found.c] || found.c || '-') +
+        row('연락처', esc(found.p || '-')) +
+        row('이메일', esc(found.e || '-'));
+      document.getElementById('mb-member-info').style.display = '';
+      document.getElementById('mb-not-found').style.display = 'none';
+    } else {
+      document.getElementById('mb-member-info').style.display = 'none';
+      document.getElementById('mb-not-found').style.display = 'block';
+      document.getElementById('mb-not-found').innerHTML =
+        '<div style="font-size:13px;color:var(--derma-text-3)">해시 ID: <code>' + hash16 + '</code></div>' +
+        '<div style="font-size:12px;opacity:.6;margin-top:6px">QR 토큰 유효 — 회원 정보 없음</div>';
+    }
+  } catch {
+    document.getElementById('mb-member-info').style.display = 'none';
+    document.getElementById('mb-not-found').style.display = 'block';
+  }
+
+  showStep('step-mb');
+}
+
+function confirmMemberScan() {
+  logScanAction('member_qr_confirmed', { hash: activeMemberHash });
+  document.getElementById('complete-title').textContent = '회원 QR 확인 완료';
+  document.getElementById('complete-msg').textContent = '사용자 QR이 성공적으로 확인되었습니다.';
+  document.getElementById('complete-summary').innerHTML =
+    row('QR 유형', '사용자 QR (MB)') +
+    (activeMemberData ? row('회원명', esc(activeMemberData.n || '-')) : row('해시 ID', '<code>' + activeMemberHash + '</code>')) +
+    row('확인 시간', new Date().toLocaleString('ko-KR'));
+  showStep('step-complete');
+  toast('회원 확인 완료!', 'success');
+}
+
+/* ── Derma Form Helpers ── */
 function selectDevice(el, device) {
   document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -411,11 +516,8 @@ function selectDevice(el, device) {
 
 function toggleArea(el, area) {
   el.classList.toggle('selected');
-  if (selectedAreas.includes(area)) {
-    selectedAreas = selectedAreas.filter(a => a !== area);
-  } else {
-    selectedAreas.push(area);
-  }
+  if (selectedAreas.includes(area)) selectedAreas = selectedAreas.filter(a => a !== area);
+  else selectedAreas.push(area);
 }
 
 function selectDuration(el, mins) {
@@ -424,101 +526,59 @@ function selectDuration(el, mins) {
   selectedDuration = mins;
 }
 
-function submitDermaSession() {
-  if (!selectedDevice) { toast('사용 기기를 선택하세요', 'error'); return; }
-  if (selectedAreas.length === 0) { toast('시술 부위를 선택하세요', 'error'); return; }
-  if (!selectedDuration) { toast('사용 시간을 선택하세요', 'error'); return; }
-
-  const session = {
-    id: 'DS' + Date.now(),
-    memberHash: currentHash,
-    memberId: currentMemberId,
-    memberName: currentDisplay?.n || '-',
-    country: currentDisplay?.c || '-',
-    qrToken: scannedQRToken ? (scannedQRToken.slice(0, 16) + '...') : null,
-    device: selectedDevice,
-    areas: [...selectedAreas],
-    duration: selectedDuration,
-    notes: document.getElementById('session-notes').value.trim(),
-    storeId: getStoreId(),
-    timestamp: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-  };
-
-  // Save to localStorage
-  const sessions = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
-  sessions.push(session);
-  localStorage.setItem('derma_sessions', JSON.stringify(sessions));
-
-  logAction('derma_session_created', { id: session.id, device: session.device, areas: session.areas });
-
-  // Show completion
-  renderSessionSummary(session);
-  showStep('step-complete');
-  toast('더마 세션이 기록되었습니다!', 'success');
+/* ── Utils ── */
+async function hashId(id) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT + String(id)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 16);
 }
 
-function renderSessionSummary(session) {
-  const deviceNames = {
-    'dermahome10': 'DermaHome 10',
-    'dermahome-pro': 'DermaHome Pro',
-    'derma-led': 'Derma LED',
-    'scalp-care': 'Scalp Care',
-  };
-  const areaNames = {
-    face:'얼굴', forehead:'이마', cheek:'볼', chin:'턱', 'neck-face':'목',
-    body:'바디', arm:'팔', leg:'다리', back:'등', abdomen:'복부',
-    scalp:'두피', 'scalp-front':'전두부', 'scalp-top':'정수리'
-  };
-
-  const el = document.getElementById('session-summary');
-  el.innerHTML = `
-    <div class="info-row"><span class="info-label">세션 ID</span><span class="info-value" style="font-family:monospace;font-size:11px">${session.id}</span></div>
-    <div class="info-row"><span class="info-label">회원</span><span class="info-value">${esc(session.memberName)} (${session.memberId})</span></div>
-    <div class="info-row"><span class="info-label">사용 기기</span><span class="info-value">${deviceNames[session.device] || session.device}</span></div>
-    <div class="info-row"><span class="info-label">시술 부위</span><span class="info-value">${session.areas.map(a => areaNames[a] || a).join(', ')}</span></div>
-    <div class="info-row"><span class="info-label">사용 시간</span><span class="info-value">${session.duration}분</span></div>
-    <div class="info-row"><span class="info-label">일시</span><span class="info-value">${new Date(session.timestamp).toLocaleString('ko-KR')}</span></div>
-    ${session.notes ? '<div class="info-row"><span class="info-label">메모</span><span class="info-value">' + esc(session.notes) + '</span></div>' : ''}
-  `;
+async function loadMemberDisplay() {
+  if (!memberDisplay) {
+    try { memberDisplay = await (await fetch('../data/member-display.json')).json(); } catch { memberDisplay = {}; }
+  }
 }
 
-/* ── Helpers ── */
-function showStep(stepId) {
+function getStoreFromUrl() {
+  return new URLSearchParams(window.location.search).get('store');
+}
+
+function showError(msg) {
+  document.getElementById('error-msg').innerHTML = msg;
+  showStep('step-error');
+}
+
+function showStep(id) {
   document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
-  document.getElementById(stepId).style.display = 'block';
+  document.getElementById(id).style.display = 'block';
   window.scrollTo(0, 0);
 }
 
-function getStoreId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('store') || 'hq';
-}
-
-function resetAll() {
-  currentHash = null;
-  currentMemberId = null;
-  currentDisplay = null;
-  selectedDevice = null;
-  selectedAreas = [];
-  selectedDuration = null;
-  scannedQRToken = null;
-  document.getElementById('scan-member-id').value = '';
-  document.getElementById('verify-form').style.display = '';
-  document.getElementById('verified-info').style.display = 'none';
-  document.getElementById('manual-entry').style.display = 'none';
+function resetScan() {
+  // Reset state
+  activeQRType = null; activeToken = null; activeStoreId = getStoreFromUrl() || null;
+  activeMemberHash = null; activeMemberData = null;
+  selectedDevice = null; selectedAreas = []; selectedDuration = null;
+  hqMemberId = null; hqMemberDisplay = null;
+  document.getElementById('hq-member-id').value = '';
+  document.getElementById('hq-verify-form').style.display = '';
+  document.getElementById('hq-detail-form').style.display = 'none';
   document.getElementById('session-notes').value = '';
-  document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('.area-tag').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('[data-dur]').forEach(c => c.classList.remove('selected'));
-  showStep('step-verify');
+  document.querySelectorAll('.device-card,.area-tag,[data-dur]').forEach(el => el.classList.remove('selected'));
+  document.getElementById('manual-code').value = '';
+  document.getElementById('manual-entry').style.display = 'none';
+  showStep('step-scan');
+  startCamera();
 }
 
-function logAction(action, data) {
-  const logs = JSON.parse(localStorage.getItem('derma_action_logs') || '[]');
-  logs.push({ action, ...data, timestamp: Date.now() });
-  if (logs.length > 500) logs.splice(0, logs.length - 500);
-  localStorage.setItem('derma_action_logs', JSON.stringify(logs));
+function logScanAction(action, data) {
+  const logs = JSON.parse(localStorage.getItem('qr_scan_logs') || '[]');
+  logs.push({ action, ...data, timestamp: Date.now(), storeId: activeStoreId });
+  if (logs.length > 1000) logs.splice(0, logs.length - 1000);
+  localStorage.setItem('qr_scan_logs', JSON.stringify(logs));
+}
+
+function row(label, value) {
+  return '<div class="info-row"><span class="info-label">' + label + '</span><span class="info-value">' + value + '</span></div>';
 }
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -531,28 +591,6 @@ function toast(msg, type) {
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
-
-// Check URL params — auto-fill member ID and/or QR code
-document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-
-  // Pre-fill member ID from URL (e.g. from member dashboard)
-  const mid = params.get('mid');
-  if (mid) {
-    const input = document.getElementById('scan-member-id');
-    if (input) {
-      input.value = mid;
-      // Auto-trigger verification
-      setTimeout(() => verifyMember(), 300);
-    }
-  }
-
-  // Pre-fill QR code from URL (e.g. scanned from dermahome-qr)
-  const code = params.get('code');
-  if (code) {
-    scannedQRToken = code;
-  }
-});
 </script>
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }

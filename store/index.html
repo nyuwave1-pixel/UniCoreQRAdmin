@@ -6,6 +6,7 @@
   <title>UNI&CORE - 매장 관리자</title>
   <link rel="stylesheet" href="../css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
     .store-login { max-width: 440px; margin: 80px auto; padding: 20px; }
     .store-login-card { background: var(--white); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,.08); overflow: hidden; }
@@ -13,7 +14,7 @@
     .store-login-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
     .store-login-header p { font-size: 13px; opacity: .8; }
     .store-login-body { padding: 28px 24px; }
-    .store-login-body input { width:100%; padding:14px 16px; border:2px solid var(--gray-200); border-radius:12px; font-size:15px; margin-bottom:12px; outline:none; font-family:inherit; }
+    .store-login-body input { width:100%; padding:14px 16px; border:2px solid var(--gray-200); border-radius:12px; font-size:15px; margin-bottom:12px; outline:none; font-family:inherit; box-sizing:border-box; transition:border-color .2s; }
     .store-login-body input:focus { border-color:#5c8a3c; }
     .store-login-btn { width:100%; padding:14px; background:#5c8a3c; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; }
     .store-login-btn:hover { background:#4d7632; }
@@ -22,6 +23,18 @@
 
     .store-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:16px; font-size:12px; font-weight:600; background:rgba(92,138,60,0.1); color:#5c8a3c; }
     .stat-icon.derma { background: rgba(92,138,60,0.1); color: #5c8a3c; }
+
+    /* QR Generation */
+    .qr-gen-card { background:#f8fafc; border:1px solid var(--gray-200); border-radius:16px; padding:24px; text-align:center; }
+    .qr-canvas-wrap { display:inline-flex; flex-direction:column; align-items:center; gap:12px; }
+    .qr-canvas-wrap canvas, .qr-canvas-wrap img { border-radius:12px; border:3px solid #e2e8f0; }
+    .qr-token-code { font-family:monospace; font-size:11px; color:var(--gray-500); word-break:break-all; margin-top:8px; padding:8px 12px; background:var(--gray-100); border-radius:8px; }
+    .qr-type-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+    .badge-st { background:rgba(14,165,233,0.1); color:#0ea5e9; border:1px solid rgba(14,165,233,0.2); }
+
+    .tabs { display:flex; gap:2px; background:var(--gray-100); border-radius:12px; padding:4px; margin-bottom:24px; }
+    .tab-btn { flex:1; padding:8px 12px; border:none; background:transparent; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:var(--gray-500); font-family:inherit; transition:all .15s; }
+    .tab-btn.active { background:#fff; color:var(--gray-900); box-shadow:0 1px 4px rgba(0,0,0,.08); font-weight:600; }
 
     .session-detail-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; align-items:center; justify-content:center; padding:20px; }
     .session-detail-modal.show { display:flex; }
@@ -39,7 +52,7 @@
     </div>
     <div class="store-login-body">
       <div class="store-error" id="store-error"></div>
-      <input type="text" id="store-id-input" placeholder="매장 코드를 입력하세요" autocomplete="off">
+      <input type="text" id="store-id-input" placeholder="매장 코드 (예: STORE001)" autocomplete="off">
       <input type="password" id="store-pw-input" placeholder="비밀번호">
       <button class="store-login-btn" onclick="storeLogin()">매장 로그인</button>
       <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray-400)">매장 코드는 본사에서 발급됩니다</p>
@@ -69,21 +82,21 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         대시보드
       </a>
-      <a class="nav-item" data-section="store-sessions">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        더마 세션 기록
+      <a class="nav-item" data-section="store-qr-gen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        매장 QR 생성
       </a>
-      <a class="nav-item" data-section="store-qr">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        QR 스캔 시작
+      <a class="nav-item" data-section="store-scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        QR 스캔
+      </a>
+      <a class="nav-item" data-section="store-sessions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        세션 기록
       </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-title">링크</div>
-      <a class="nav-item" href="../scan/index.html" id="store-scan-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        QR 스캔 페이지
-      </a>
       <a class="nav-item" onclick="storeLogout()" style="cursor:pointer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         로그아웃
@@ -107,7 +120,7 @@
 
   <div class="page-content">
 
-    <!-- STORE DASHBOARD -->
+    <!-- DASHBOARD -->
     <section id="section-store-dash" class="page-section active">
       <div class="stats-grid">
         <div class="stat-card">
@@ -121,9 +134,9 @@
           <div class="stat-label">오늘 세션</div>
         </div>
         <div class="stat-card">
-          <div class="stat-header"><div class="stat-icon blue">&#128100;</div></div>
-          <div class="stat-value" id="s-unique-members">0</div>
-          <div class="stat-label">이용 회원 수</div>
+          <div class="stat-header"><div class="stat-icon blue">&#128247;</div></div>
+          <div class="stat-value" id="s-qr-generated">0</div>
+          <div class="stat-label">매장 QR 생성</div>
         </div>
         <div class="stat-card">
           <div class="stat-header"><div class="stat-icon purple">&#128337;</div></div>
@@ -154,7 +167,63 @@
       </div>
     </section>
 
-    <!-- STORE SESSIONS -->
+    <!-- STORE QR GENERATION -->
+    <section id="section-store-qr-gen" class="page-section">
+      <div style="max-width:520px;margin:0 auto">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <h3>&#128247; 매장 QR 생성</h3>
+            <span class="qr-type-badge badge-st">ST 타입</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:20px;line-height:1.6">
+              매장 방문 고객 확인용 QR 코드를 생성합니다.<br>
+              형식: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px">ST-{매장코드}-{6자리코드}</code>
+            </p>
+            <div style="display:flex;gap:10px;margin-bottom:16px">
+              <button class="btn btn-primary" onclick="generateStoreQR()" style="flex:1">새 매장 QR 생성</button>
+              <button class="btn btn-secondary" onclick="downloadStoreQR()">&#8595; 다운로드</button>
+            </div>
+            <div id="store-qr-area" style="display:none">
+              <div class="qr-gen-card">
+                <div class="qr-canvas-wrap">
+                  <div id="store-qr-canvas"></div>
+                </div>
+                <div class="qr-token-code" id="store-qr-token"></div>
+                <div style="margin-top:12px;font-size:12px;color:var(--gray-400)" id="store-qr-time"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent store QR list -->
+        <div class="card">
+          <div class="card-header"><h3>생성된 매장 QR 이력</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>토큰 (앞 20자)</th><th>생성 시간</th><th>상태</th></tr></thead>
+              <tbody id="store-qr-history"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR SCAN -->
+    <section id="section-store-scan" class="page-section">
+      <div style="max-width:500px;margin:0 auto;text-align:center;padding:40px 20px">
+        <div style="width:80px;height:80px;border-radius:20px;background:rgba(92,138,60,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px">&#128247;</div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">QR 코드 스캔</h3>
+        <p style="font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.6">
+          본사 QR, 매장 QR, 사용자 QR<br>모두 스캔 가능한 통합 스캔 페이지입니다.
+        </p>
+        <a id="start-scan-btn" href="#" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;font-size:15px;text-decoration:none;background:#5c8a3c">
+          &#128247; QR 스캔 시작하기
+        </a>
+      </div>
+    </section>
+
+    <!-- SESSIONS -->
     <section id="section-store-sessions" class="page-section">
       <div class="toolbar">
         <div class="toolbar-left">
@@ -178,26 +247,10 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>세션 ID</th><th>회원번호</th><th>회원명</th><th>기기</th><th>부위</th><th>시간(분)</th><th>메모</th><th>일시</th></tr></thead>
+            <thead><tr><th>세션 ID</th><th>회원번호</th><th>회원명</th><th>기기</th><th>부위</th><th>시간(분)</th><th>일시</th></tr></thead>
             <tbody id="sessions-table-body"></tbody>
           </table>
         </div>
-      </div>
-    </section>
-
-    <!-- STORE QR -->
-    <section id="section-store-qr" class="page-section">
-      <div style="max-width:500px;margin:0 auto;text-align:center;padding:40px 20px">
-        <div style="width:80px;height:80px;border-radius:20px;background:rgba(92,138,60,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px">&#128247;</div>
-        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">QR 스캔 서비스</h3>
-        <p style="font-size:14px;color:var(--gray-500);margin-bottom:24px;line-height:1.6">
-          고객 회원 인증 후 본사 QR 코드를 스캔하여<br>더마 기기 사용 세션을 기록합니다.
-        </p>
-        <a id="start-scan-btn" href="#" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;font-size:15px;text-decoration:none;background:#5c8a3c">
-          &#128247; QR 스캔 시작하기
-        </a>
-        <p style="margin-top:16px;font-size:12px;color:var(--gray-400)">또는 본사 QR 생성 페이지에서 직접 생성하세요</p>
-        <a href="https://unicore-dermahome-qr.netlify.app/generate/" target="_blank" style="font-size:13px;color:#5c8a3c;text-decoration:none;font-weight:500">본사 QR 생성 페이지 &rarr;</a>
       </div>
     </section>
 
@@ -207,17 +260,8 @@
 
 <div class="toast-container"></div>
 
-<!-- Session Detail Modal -->
-<div class="session-detail-modal" id="session-modal" onclick="if(event.target===this)closeModal()">
-  <div class="session-detail-content" id="session-modal-body"></div>
-</div>
-
 <script>
-/* ── Store Credentials (SHA-256 hashed passwords) ──
-   비밀번호 변경: node -e "require('crypto').createHash('sha256').update('새비밀번호').digest('hex')"
-   STORE001~003: '1234' → 03ac67...
-   HQ: 'admin' → 8c6976...
-──────────────────────────────────────────────────── */
+/* ── Store Credentials (SHA-256 hashed) ── */
 const STORES = {
   'STORE001': { name: '강남점', pwHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', region: '서울' },
   'STORE002': { name: '부산점', pwHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', region: '부산' },
@@ -225,43 +269,30 @@ const STORES = {
   'HQ': { name: '본사 직영', pwHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', region: '서울' },
 };
 
-// Brute-force protection state
 const _loginAttempts = {};
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 5 * 60 * 1000; // 5분
+const LOCKOUT_MS = 5 * 60 * 1000;
 
-async function sha256Store(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-const DEVICE_NAMES = {
-  'dermahome10': 'DermaHome 10',
-  'dermahome-pro': 'DermaHome Pro',
-  'derma-led': 'Derma LED',
-  'scalp-care': 'Scalp Care',
-};
-const AREA_NAMES = {
-  face:'얼굴', forehead:'이마', cheek:'볼', chin:'턱', 'neck-face':'목',
-  body:'바디', arm:'팔', leg:'다리', back:'등', abdomen:'복부',
-  scalp:'두피', 'scalp-front':'전두부', 'scalp-top':'정수리'
-};
+const DEVICE_NAMES = { 'dermahome10':'DermaHome 10','dermahome-pro':'DermaHome Pro','derma-led':'Derma LED','scalp-care':'Scalp Care' };
+const AREA_NAMES = { face:'얼굴',forehead:'이마',cheek:'볼',chin:'턱','neck-face':'목',body:'바디',arm:'팔',leg:'다리',back:'등',abdomen:'복부',scalp:'두피','scalp-front':'전두부','scalp-top':'정수리' };
 
 let currentStore = null;
 let deviceChart = null;
 let areaChart = null;
+let currentStoreQRToken = null;
+let currentStoreQRInstance = null;
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const saved = sessionStorage.getItem('store_login');
-  if (saved) {
-    try {
-      currentStore = JSON.parse(saved);
-      showStoreDashboard();
-    } catch { sessionStorage.removeItem('store_login'); }
-  }
+  if (saved) { try { currentStore = JSON.parse(saved); showStoreDashboard(); } catch { sessionStorage.removeItem('store_login'); } }
 });
 
-/* ── Store Login ── */
+/* ── Login ── */
 async function storeLogin() {
   const storeId = document.getElementById('store-id-input').value.trim().toUpperCase();
   const pw = document.getElementById('store-pw-input').value;
@@ -269,32 +300,25 @@ async function storeLogin() {
 
   if (!storeId || !pw) { errEl.textContent = '매장 코드와 비밀번호를 입력하세요'; errEl.classList.add('show'); return; }
 
-  // Brute-force check
   const now = Date.now();
   const attempts = _loginAttempts[storeId] || { count: 0, lockedUntil: 0 };
   if (attempts.lockedUntil > now) {
-    const remain = Math.ceil((attempts.lockedUntil - now) / 60000);
-    errEl.textContent = `잠금 중 — ${remain}분 후 다시 시도하세요`;
-    errEl.classList.add('show');
-    return;
+    errEl.textContent = '잠금 중 — ' + Math.ceil((attempts.lockedUntil - now) / 60000) + '분 후 다시 시도하세요';
+    errEl.classList.add('show'); return;
   }
 
   const store = STORES[storeId];
-  if (!store) {
-    errEl.textContent = '매장 코드 또는 비밀번호가 올바르지 않습니다';
-    errEl.classList.add('show');
-    return;
-  }
+  if (!store) { errEl.textContent = '매장 코드 또는 비밀번호가 올바르지 않습니다'; errEl.classList.add('show'); return; }
 
-  const hash = await sha256Store(pw);
+  const hash = await sha256(pw);
   if (hash !== store.pwHash) {
     attempts.count = (attempts.count || 0) + 1;
     if (attempts.count >= MAX_ATTEMPTS) {
       attempts.lockedUntil = now + LOCKOUT_MS;
       attempts.count = 0;
-      errEl.textContent = `비밀번호 ${MAX_ATTEMPTS}회 오류 — 5분간 잠금됩니다`;
+      errEl.textContent = '비밀번호 ' + MAX_ATTEMPTS + '회 오류 — 5분간 잠금됩니다';
     } else {
-      errEl.textContent = `비밀번호가 올바르지 않습니다 (${attempts.count}/${MAX_ATTEMPTS})`;
+      errEl.textContent = '비밀번호가 올바르지 않습니다 (' + attempts.count + '/' + MAX_ATTEMPTS + ')';
     }
     _loginAttempts[storeId] = attempts;
     errEl.classList.add('show');
@@ -302,7 +326,6 @@ async function storeLogin() {
     return;
   }
 
-  // Success — reset attempts
   delete _loginAttempts[storeId];
   currentStore = { id: storeId, name: store.name, region: store.region };
   sessionStorage.setItem('store_login', JSON.stringify(currentStore));
@@ -324,11 +347,7 @@ function showStoreDashboard() {
   document.getElementById('store-dashboard').style.display = '';
   document.getElementById('store-name-display').textContent = currentStore.name;
   document.getElementById('store-badge').textContent = currentStore.name + ' (' + currentStore.id + ')';
-
-  const scanLink = document.getElementById('store-scan-link');
-  scanLink.href = '../scan/index.html?store=' + currentStore.id;
   document.getElementById('start-scan-btn').href = '../scan/index.html?store=' + currentStore.id;
-
   initStoreNav();
   showStoreSection('store-dash');
 }
@@ -348,32 +367,86 @@ function showStoreSection(name) {
   document.getElementById('section-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item[data-section]').forEach(n => n.classList.remove('active'));
   document.querySelector('.nav-item[data-section="' + name + '"]')?.classList.add('active');
-  const titles = { 'store-dash': '매장 대시보드', 'store-sessions': '더마 세션 기록', 'store-qr': 'QR 스캔' };
+  const titles = { 'store-dash':'매장 대시보드','store-qr-gen':'매장 QR 생성','store-scan':'QR 스캔','store-sessions':'세션 기록' };
   document.querySelector('.header-title').textContent = titles[name] || '';
   if (name === 'store-dash') renderStoreDashboard();
   else if (name === 'store-sessions') renderStoreSessions();
+  else if (name === 'store-qr-gen') renderStoreQRHistory();
 }
 
-/* ── Data ── */
-function getStoreSessions() {
-  const all = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
-  if (!currentStore) return all;
-  // Show all sessions for HQ, filter by store for others
-  if (currentStore.id === 'HQ') return all;
-  return all.filter(s => s.storeId === currentStore.id || s.storeId === 'hq');
+/* ── Store QR Generation ── */
+function generateStoreQR() {
+  const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+  currentStoreQRToken = 'ST-' + currentStore.id + '-' + code;
+
+  const area = document.getElementById('store-qr-canvas');
+  area.innerHTML = '';
+  currentStoreQRInstance = new QRCode(area, {
+    text: currentStoreQRToken,
+    width: 200, height: 200,
+    colorDark: '#1e293b', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('store-qr-token').textContent = currentStoreQRToken;
+  document.getElementById('store-qr-time').textContent = '생성: ' + new Date().toLocaleString('ko-KR');
+  document.getElementById('store-qr-area').style.display = 'block';
+
+  // Save to history
+  const history = JSON.parse(localStorage.getItem('st_qr_history_' + currentStore.id) || '[]');
+  history.unshift({ token: currentStoreQRToken, createdAt: Date.now() });
+  if (history.length > 50) history.splice(50);
+  localStorage.setItem('st_qr_history_' + currentStore.id, JSON.stringify(history));
+
+  renderStoreQRHistory();
+  toast('매장 QR이 생성되었습니다', 'success');
+}
+
+function downloadStoreQR() {
+  if (!currentStoreQRToken) { toast('먼저 QR을 생성하세요', 'error'); return; }
+  const canvas = document.getElementById('store-qr-canvas').querySelector('canvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = 'store_qr_' + currentStore.id + '_' + Date.now() + '.png';
+  link.click();
+  toast('QR 이미지 다운로드 완료', 'success');
+}
+
+function renderStoreQRHistory() {
+  if (!currentStore) return;
+  const history = JSON.parse(localStorage.getItem('st_qr_history_' + currentStore.id) || '[]');
+  const tbody = document.getElementById('store-qr-history');
+  if (!tbody) return;
+  if (history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-400)">생성된 QR이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = history.slice(0, 20).map(h =>
+    '<tr><td><code style="font-size:11px">' + esc(h.token.slice(0, 20)) + '...</code></td>' +
+    '<td>' + fmtDate(h.createdAt) + '</td>' +
+    '<td><span class="badge badge-active">유효</span></td></tr>'
+  ).join('');
 }
 
 /* ── Dashboard ── */
+function getStoreSessions() {
+  const all = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
+  if (!currentStore) return all;
+  if (currentStore.id === 'HQ') return all;
+  return all.filter(s => s.storeId === currentStore.id);
+}
+
 function renderStoreDashboard() {
   const sessions = getStoreSessions();
   const today = new Date().toISOString().split('T')[0];
   const todaySessions = sessions.filter(s => s.date === today);
-  const uniqueMembers = new Set(sessions.map(s => s.memberHash || s.memberId)).size;
   const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const stQRHistory = JSON.parse(localStorage.getItem('st_qr_history_' + (currentStore?.id || '')) || '[]');
 
   document.getElementById('s-total-sessions').textContent = sessions.length.toLocaleString();
   document.getElementById('s-today-sessions').textContent = todaySessions.length.toLocaleString();
-  document.getElementById('s-unique-members').textContent = uniqueMembers.toLocaleString();
+  document.getElementById('s-qr-generated').textContent = stQRHistory.length.toLocaleString();
   document.getElementById('s-total-minutes').textContent = totalMinutes.toLocaleString();
 
   renderDeviceChart(sessions);
@@ -385,14 +458,14 @@ function renderDeviceChart(sessions) {
   const ctx = document.getElementById('deviceChart');
   if (!ctx) return;
   const counts = {};
-  sessions.forEach(s => { const d = DEVICE_NAMES[s.device] || s.device; counts[d] = (counts[d] || 0) + 1; });
+  sessions.forEach(s => { const d = DEVICE_NAMES[s.device] || s.device || '기타'; counts[d] = (counts[d] || 0) + 1; });
   const labels = Object.keys(counts);
   const values = Object.values(counts);
-  const colors = ['#5c8a3c','#38bdf8','#a78bfa','#f59e0b'];
   if (deviceChart) deviceChart.destroy();
+  if (labels.length === 0) return;
   deviceChart = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
+    data: { labels, datasets: [{ data: values, backgroundColor: ['#5c8a3c','#38bdf8','#a78bfa','#f59e0b'], borderWidth: 0 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true } } } }
   });
 }
@@ -402,13 +475,12 @@ function renderAreaChart(sessions) {
   if (!ctx) return;
   const counts = {};
   sessions.forEach(s => { (s.areas || []).forEach(a => { const n = AREA_NAMES[a] || a; counts[n] = (counts[n] || 0) + 1; }); });
-  const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
-  const labels = sorted.map(e => e[0]);
-  const values = sorted.map(e => e[1]);
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 8);
   if (areaChart) areaChart.destroy();
+  if (sorted.length === 0) return;
   areaChart = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [{ label: '시술 횟수', data: values, backgroundColor: '#5c8a3c', borderRadius: 6 }] },
+    data: { labels: sorted.map(e => e[0]), datasets: [{ label: '시술 횟수', data: sorted.map(e => e[1]), backgroundColor: '#5c8a3c', borderRadius: 6 }] },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } } }
   });
 }
@@ -417,13 +489,12 @@ function renderRecentSessions(sessions) {
   const tbody = document.getElementById('recent-sessions-body');
   const recent = sessions.sort((a,b) => b.timestamp - a.timestamp).slice(0, 10);
   if (recent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray-400)">더마 세션 기록이 없습니다</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--gray-400)">세션 기록이 없습니다</td></tr>';
     return;
   }
   tbody.innerHTML = recent.map(s => {
     const areas = (s.areas || []).map(a => AREA_NAMES[a] || a).join(', ');
-    return '<tr onclick="showSessionDetail(\'' + s.id + '\')" style="cursor:pointer">' +
-      '<td><code style="font-size:11px">' + esc(s.id.slice(0,10)) + '</code></td>' +
+    return '<tr><td><code style="font-size:11px">' + esc(s.id.slice(0,10)) + '</code></td>' +
       '<td><strong>' + esc(s.memberName) + '</strong></td>' +
       '<td>' + (DEVICE_NAMES[s.device] || s.device) + '</td>' +
       '<td>' + esc(areas) + '</td>' +
@@ -432,87 +503,48 @@ function renderRecentSessions(sessions) {
   }).join('');
 }
 
-/* ── Sessions List ── */
 function renderStoreSessions() {
   const sessions = getStoreSessions();
   const search = (document.getElementById('session-search')?.value || '').toLowerCase();
   const deviceFilter = document.getElementById('session-device-filter')?.value || 'all';
-
   let filtered = sessions;
   if (deviceFilter !== 'all') filtered = filtered.filter(s => s.device === deviceFilter);
   if (search) filtered = filtered.filter(s =>
     String(s.memberId).includes(search) || (s.memberName||'').toLowerCase().includes(search) ||
     (DEVICE_NAMES[s.device]||'').toLowerCase().includes(search)
   );
-
   filtered.sort((a,b) => b.timestamp - a.timestamp);
   document.getElementById('session-count').textContent = filtered.length + '건';
-
   const tbody = document.getElementById('sessions-table-body');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gray-400)">세션 기록이 없습니다</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--gray-400)">세션 기록이 없습니다</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.slice(0, 100).map(s => {
     const areas = (s.areas || []).map(a => AREA_NAMES[a] || a).join(', ');
-    return '<tr onclick="showSessionDetail(\'' + s.id + '\')" style="cursor:pointer">' +
-      '<td><code style="font-size:11px">' + esc(s.id.slice(0,12)) + '</code></td>' +
+    return '<tr><td><code style="font-size:11px">' + esc(s.id.slice(0,12)) + '</code></td>' +
       '<td>' + esc(String(s.memberId)) + '</td>' +
       '<td><strong>' + esc(s.memberName) + '</strong></td>' +
       '<td>' + (DEVICE_NAMES[s.device] || s.device) + '</td>' +
       '<td>' + esc(areas) + '</td>' +
       '<td>' + (s.duration || '-') + '</td>' +
-      '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(s.notes || '-') + '</td>' +
       '<td>' + fmtDate(s.timestamp) + '</td></tr>';
   }).join('');
 }
 
-function showSessionDetail(sessionId) {
-  const sessions = JSON.parse(localStorage.getItem('derma_sessions') || '[]');
-  const s = sessions.find(x => x.id === sessionId);
-  if (!s) return;
-
-  const areas = (s.areas || []).map(a => AREA_NAMES[a] || a).join(', ');
-  const body = document.getElementById('session-modal-body');
-  body.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h3 style="font-size:18px;font-weight:700">더마 세션 상세</h3>
-      <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-400)">&times;</button>
-    </div>
-    <div style="display:grid;gap:12px">
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">세션 ID</span><code style="font-size:12px">${esc(s.id)}</code></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">회원번호</span><strong>${esc(String(s.memberId))}</strong></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">회원명</span><strong>${esc(s.memberName)}</strong></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">국가</span><span>${esc(s.country)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">사용 기기</span><strong style="color:#5c8a3c">${DEVICE_NAMES[s.device] || s.device}</strong></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">시술 부위</span><span>${esc(areas)}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">사용 시간</span><span>${s.duration}분</span></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">QR 토큰</span><code style="font-size:11px">${esc(s.qrToken || '-')}</code></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">매장</span><span>${esc(s.storeId || 'HQ')}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-500)">일시</span><span>${new Date(s.timestamp).toLocaleString('ko-KR')}</span></div>
-      ${s.notes ? '<div style="padding:10px 0"><span style="color:var(--gray-500);display:block;margin-bottom:6px">메모</span><p style="font-size:13px;color:var(--gray-700);background:var(--gray-50);padding:12px;border-radius:8px">' + esc(s.notes) + '</p></div>' : ''}
-    </div>
-  `;
-  document.getElementById('session-modal').classList.add('show');
-}
-
-function closeModal() {
-  document.getElementById('session-modal').classList.remove('show');
-}
-
 function exportSessions() {
   const sessions = getStoreSessions();
-  let csv = '﻿세션ID,회원번호,회원명,기기,시술부위,시간(분),매장,메모,일시\n';
+  let csv = '﻿세션ID,회원번호,회원명,기기,시술부위,시간(분),일시\n';
   sessions.forEach(s => {
     const areas = (s.areas || []).map(a => AREA_NAMES[a] || a).join('+');
-    csv += s.id + ',' + s.memberId + ',"' + (s.memberName||'') + '",' + (DEVICE_NAMES[s.device]||s.device) + ',"' + areas + '",' + (s.duration||'') + ',' + (s.storeId||'') + ',"' + (s.notes||'') + '",' + fmtDate(s.timestamp) + '\n';
+    csv += s.id + ',' + s.memberId + ',"' + (s.memberName||'') + '",' + (DEVICE_NAMES[s.device]||s.device) + ',"' + areas + '",' + (s.duration||'') + ',' + fmtDate(s.timestamp) + '\n';
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'derma_sessions_' + new Date().toISOString().split('T')[0] + '.csv';
-  link.click();
-  toast('세션 데이터가 다운로드되었습니다', 'success');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'store_sessions_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('CSV 다운로드 완료', 'success');
 }
 
 /* ── Helpers ── */

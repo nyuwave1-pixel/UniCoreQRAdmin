@@ -3,504 +3,334 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNI&CORE - QR 프로모션</title>
-  <link rel="stylesheet" href="css/promo.css">
+  <title>UNI&CORE — 회원 QR</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
-    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); min-height: 100vh; padding: 20px; }
-    .promo-container { max-width: 440px; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);display:flex;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 
-    .login-card {
-      background: #fff;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 25px 80px rgba(0,0,0,.3);
-    }
-    .login-header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
-      padding: 40px 28px 32px;
-      text-align: center;
-      color: #fff;
-    }
-    .login-header .logo {
-      width: 64px; height: 64px;
-      background: rgba(255,255,255,.2);
-      border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 24px; font-weight: 800;
-      backdrop-filter: blur(8px);
-    }
-    .login-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    .login-header p { font-size: 14px; opacity: .8; }
-    .login-body { padding: 32px 28px; }
-    .login-field { margin-bottom: 20px; }
-    .login-field label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: var(--gray-700); margin-bottom: 8px;
-    }
-    .login-field input {
-      width: 100%; padding: 14px 16px;
-      border: 2px solid var(--gray-200); border-radius: 12px;
-      font-size: 16px; font-family: inherit; outline: none;
-      transition: border-color .2s;
-      text-align: center; letter-spacing: .05em;
-    }
-    .login-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,.1); }
-    .login-field input::placeholder { letter-spacing: normal; text-align: left; }
-    .login-btn {
-      width: 100%; padding: 14px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 600; cursor: pointer;
-      font-family: inherit; transition: all .2s;
-    }
-    .login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.4); }
-    .login-btn:active { transform: translateY(0); }
-    .login-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-    .login-error {
-      display: none; padding: 12px 16px;
-      background: #fef2f2; border: 1px solid #fecaca;
-      border-radius: 10px; color: #dc2626;
-      font-size: 13px; margin-bottom: 16px;
-      text-align: center;
-    }
-    .login-error.show { display: block; }
-    .login-footer {
-      text-align: center; padding-top: 16px;
-      border-top: 1px solid var(--gray-100);
-    }
+    /* ─ Card ─ */
+    .card{background:#fff;border-radius:20px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+    .card-header{padding:36px 28px 28px;text-align:center;color:#fff;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)}
+    .card-header .logo{width:60px;height:60px;background:rgba(255,255,255,.18);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;font-weight:800;backdrop-filter:blur(8px)}
+    .card-header h1{font-size:20px;font-weight:700;margin-bottom:4px}
+    .card-header p{font-size:13px;opacity:.8}
+    .card-body{padding:28px}
 
-    .member-dashboard { display: none; }
-    .member-dashboard.show { display: block; }
-    .member-card {
-      background: #fff; border-radius: 20px;
-      box-shadow: 0 25px 80px rgba(0,0,0,.3);
-      overflow: hidden;
-    }
-    .member-header {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      padding: 28px; color: #fff;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .member-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .member-info p { font-size: 13px; opacity: .8; }
-    .logout-btn {
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
-      color: #fff; padding: 6px 14px; border-radius: 8px;
-      font-size: 12px; cursor: pointer; font-family: inherit;
-    }
-    .logout-btn:hover { background: rgba(255,255,255,.25); }
-    .member-body { padding: 28px; }
-    .member-detail-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 16px; margin-bottom: 28px;
-    }
-    .detail-item label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .06em; color: var(--gray-400); display: block; margin-bottom: 2px;
-    }
-    .detail-item p { font-size: 14px; font-weight: 500; color: var(--gray-800); }
+    /* ─ Form ─ */
+    .field label{display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+    .field input{width:100%;padding:13px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:.05em;transition:border-color .2s}
+    .field input:focus{border-color:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.1)}
+    .field input::placeholder{text-align:left;letter-spacing:normal;color:#94a3b8}
+    .error-box{display:none;padding:11px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#dc2626;font-size:13px;text-align:center;margin-bottom:14px}
+    .error-box.show{display:block}
+    .btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+    .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+    .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    .btn-primary:active{transform:translateY(0)}
+    .btn-outline{background:#f8fafc;border:1.5px solid #e2e8f0;color:#475569}
+    .btn-outline:hover{border-color:#6366f1;color:#6366f1}
+    .footer-note{text-align:center;margin-top:16px;font-size:12px;color:#94a3b8}
 
-    .qr-section {
-      background: var(--gray-50); border-radius: 16px;
-      padding: 24px; text-align: center;
-    }
-    .qr-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-    .qr-output {
-      display: none; flex-direction: column; align-items: center; gap: 16px;
-    }
-    .qr-output.show { display: flex; }
-    .qr-output canvas { border-radius: 8px; }
-    .qr-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
-    .qr-actions button {
-      padding: 10px 20px; border-radius: 10px;
-      font-size: 14px; font-weight: 500; cursor: pointer;
-      font-family: inherit; border: none; transition: all .15s;
-    }
-    .qr-gen-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff; padding: 14px 28px; border: none;
-      border-radius: 12px; font-size: 15px; font-weight: 600;
-      cursor: pointer; font-family: inherit; transition: all .2s;
-      width: 100%;
-    }
-    .qr-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,.3); }
-    .btn-download { background: var(--primary); color: #fff; }
-    .btn-download:hover { background: #4f46e5; }
-    .btn-copy { background: var(--gray-200); color: var(--gray-700); }
-    .btn-copy:hover { background: var(--gray-300); }
+    /* ─ Dashboard ─ */
+    #dashboard{display:none}
+    .dash-header{background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:22px 24px;display:flex;align-items:center;justify-content:space-between;color:#fff}
+    .dash-name{font-size:17px;font-weight:700}
+    .dash-sub{font-size:12px;opacity:.75;margin-top:2px}
+    .logout-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
+    .dash-body{padding:20px}
 
-    .qr-history { margin-top: 24px; text-align: left; }
-    .qr-history h4 {
-      font-size: 14px; font-weight: 600;
-      color: var(--gray-600); margin-bottom: 12px;
-    }
-    .history-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 0; border-bottom: 1px solid var(--gray-100);
-      font-size: 13px;
-    }
-    .history-item:last-child { border-bottom: none; }
-    .history-date { color: var(--gray-400); font-size: 12px; }
+    /* ─ Info grid ─ */
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+    .info-item{background:#f8fafc;border-radius:10px;padding:12px}
+    .info-item .label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:3px}
+    .info-item .value{font-size:14px;font-weight:600;color:#1e293b}
 
-    .loading-spinner {
-      display: none;
-      width: 20px; height: 20px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-      margin: 0 auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ─ QR type tabs ─ */
+    .qr-tabs{display:flex;gap:6px;margin-bottom:16px;background:#f1f5f9;border-radius:10px;padding:4px}
+    .qr-tab{flex:1;padding:9px;border-radius:7px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:600;color:#64748b;font-family:inherit;transition:all .15s}
+    .qr-tab.active{background:#fff;color:#6366f1;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 
-    .admin-link {
-      display: block; text-align: center; margin-top: 16px;
-      font-size: 12px; color: rgba(255,255,255,.4);
-      text-decoration: none;
-    }
-    .admin-link:hover { color: rgba(255,255,255,.7); }
+    /* ─ QR section ─ */
+    .qr-panel{background:#f8fafc;border-radius:14px;padding:20px;text-align:center}
+    .qr-panel h3{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px}
+    .qr-panel p{font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.5}
+    .qr-wrap{display:inline-block;background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:12px}
+    .qr-wrap canvas{display:block;border-radius:6px}
+    .qr-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px}
+    .badge-mb{background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.25)}
+    .badge-hq{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.25)}
+    .expiry-bar{font-size:11px;color:#94a3b8;margin-top:4px}
+
+    /* ─ Action buttons ─ */
+    .action-row{display:flex;gap:8px;margin-top:10px}
+    .btn-sm{flex:1;padding:10px 8px;font-size:13px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s}
+    .btn-sm-primary{background:#6366f1;color:#fff}
+    .btn-sm-primary:hover{background:#4f46e5}
+    .btn-sm-outline{background:#fff;border:1.5px solid #e2e8f0;color:#475569}
+    .btn-sm-outline:hover{border-color:#6366f1;color:#6366f1}
+
+    /* ─ Scan section ─ */
+    .scan-link{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;text-decoration:none;margin-top:14px;transition:all .15s}
+    .scan-link:hover{border-color:#22c55e;background:#dcfce7}
+    .scan-link .scan-icon{width:40px;height:40px;background:#22c55e;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .scan-link .scan-text{text-align:left}
+    .scan-link .scan-title{font-size:14px;font-weight:700;color:#166534}
+    .scan-link .scan-sub{font-size:11px;color:#4ade80;margin-top:1px}
+    .scan-link .scan-arrow{margin-left:auto;color:#4ade80;font-size:18px}
+
+    .admin-link{display:block;text-align:center;margin-top:14px;font-size:12px;color:rgba(255,255,255,.35);text-decoration:none}
+    .admin-link:hover{color:rgba(255,255,255,.6)}
   </style>
 </head>
 <body>
 
-<!-- LOGIN VIEW -->
-<div class="promo-container" id="login-view">
-  <div class="login-card">
-    <div class="login-header">
+<!-- ══ LOGIN ══ -->
+<div id="login-wrap" style="width:100%;max-width:420px">
+  <div class="card">
+    <div class="card-header">
       <div class="logo">U&C</div>
       <h1>UNI&CORE QR 프로모션</h1>
       <p>회원번호를 입력하여 로그인하세요</p>
     </div>
-    <div class="login-body">
-      <div class="login-error" id="login-error"></div>
-      <form onsubmit="event.preventDefault(); handleLogin();">
-        <div class="login-field">
+    <div class="card-body">
+      <div class="error-box" id="login-error"></div>
+      <form onsubmit="event.preventDefault();handleLogin()">
+        <div class="field" style="margin-bottom:16px">
           <label>회원번호</label>
-          <input type="text" id="member-id-input" placeholder="회원번호를 입력하세요" inputmode="numeric" autocomplete="off">
+          <input type="text" id="member-input" placeholder="회원번호를 입력하세요" inputmode="numeric" autocomplete="off">
         </div>
-        <button type="submit" class="login-btn" id="login-btn">
+        <button type="submit" class="btn btn-primary" id="login-btn">
           <span id="login-text">로그인</span>
-          <div class="loading-spinner" id="login-spinner"></div>
         </button>
       </form>
-      <div class="login-footer">
-        <p style="color:var(--gray-400);font-size:12px;margin-top:12px">회원만 QR코드를 생성할 수 있습니다</p>
-      </div>
+      <p class="footer-note">회원만 QR코드를 생성할 수 있습니다</p>
     </div>
   </div>
   <a href="admin/index.html" class="admin-link">관리자 페이지</a>
 </div>
 
-<!-- MEMBER DASHBOARD VIEW -->
-<div class="promo-container member-dashboard" id="member-view">
-  <div class="member-card">
-    <div class="member-header">
-      <div class="member-info">
-        <h2 id="member-name">-</h2>
-        <p>회원번호: <span id="member-id-display">-</span></p>
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard" style="width:100%;max-width:420px">
+  <div class="card">
+    <div class="dash-header">
+      <div>
+        <div class="dash-name" id="d-name">-</div>
+        <div class="dash-sub">회원번호: <span id="d-id">-</span></div>
       </div>
       <button class="logout-btn" onclick="handleLogout()">로그아웃</button>
     </div>
-    <div class="member-body">
-      <div class="member-detail-grid">
-        <div class="detail-item">
-          <label>국가</label>
-          <p id="member-country">-</p>
+    <div class="dash-body">
+
+      <!-- Member info -->
+      <div class="info-grid">
+        <div class="info-item"><div class="label">국가</div><div class="value" id="d-country">-</div></div>
+        <div class="info-item"><div class="label">상태</div><div class="value" style="color:#16a34a">활동</div></div>
+        <div class="info-item"><div class="label">연락처</div><div class="value" id="d-phone">-</div></div>
+        <div class="info-item"><div class="label">이메일</div><div class="value" id="d-email" style="font-size:11px;word-break:break-all">-</div></div>
+      </div>
+
+      <!-- QR section -->
+      <div class="qr-tabs">
+        <button class="qr-tab active" onclick="switchTab('member')">사용자 QR</button>
+        <button class="qr-tab" onclick="switchTab('hq')">본사 QR 스캔</button>
+      </div>
+
+      <!-- Tab: 사용자 QR -->
+      <div id="tab-member" class="qr-panel">
+        <h3>내 사용자 QR</h3>
+        <p>매장 직원에게 제시하여 본인 인증에 사용하세요.<br>24시간 후 자동 만료됩니다.</p>
+        <div id="mb-qr-wrap" style="display:none">
+          <div class="qr-badge badge-mb">MB · 사용자 QR</div><br>
+          <div class="qr-wrap"><div id="mb-qr-canvas"></div></div>
+          <div class="expiry-bar" id="mb-expiry-text"></div>
+          <div class="action-row">
+            <button class="btn-sm btn-sm-outline" onclick="generateMemberQR()">&#8635; 갱신</button>
+            <button class="btn-sm btn-sm-outline" onclick="downloadQR('mb-qr-canvas')">&#8595; 저장</button>
+          </div>
         </div>
-        <div class="detail-item">
-          <label>상태</label>
-          <p id="member-status">-</p>
-        </div>
-        <div class="detail-item">
-          <label>연락처</label>
-          <p id="member-phone">-</p>
-        </div>
-        <div class="detail-item">
-          <label>이메일</label>
-          <p id="member-email">-</p>
+        <div id="mb-qr-placeholder">
+          <button class="btn-sm btn-sm-primary" style="width:100%;padding:13px" onclick="generateMemberQR()">&#128246; 사용자 QR 생성</button>
         </div>
       </div>
 
-      <div class="qr-section">
-        <h3>내 QR 코드</h3>
-        <div id="qr-placeholder">
-          <p style="color:var(--gray-400);font-size:13px;margin-bottom:16px">나만의 QR 코드를 생성하여 프로모션에 활용하세요</p>
-          <button class="qr-gen-btn" onclick="generateMemberQR()">QR 코드 생성</button>
-        </div>
-        <div class="qr-output" id="qr-output">
-          <div id="qr-canvas-wrap"></div>
-          <p style="font-size:12px;color:var(--gray-500)" id="qr-url-display"></p>
-          <div class="qr-actions">
-            <button class="btn-download" onclick="downloadMemberQR()">다운로드</button>
-            <button class="btn-copy" onclick="copyMemberQRLink()">링크 복사</button>
+      <!-- Tab: 본사 QR 스캔 -->
+      <div id="tab-hq" class="qr-panel" style="display:none">
+        <h3>본사 QR 스캔</h3>
+        <p>매장에서 제공하는 본사 QR 코드를 스캔하거나<br>QR 코드 번호를 직접 입력하세요.</p>
+        <a class="scan-link" id="scan-btn" href="scan/index.html">
+          <div class="scan-icon">&#128247;</div>
+          <div class="scan-text">
+            <div class="scan-title">카메라로 QR 스캔</div>
+            <div class="scan-sub">본사 QR · 매장 QR · 사용자 QR 모두 지원</div>
           </div>
-        </div>
-        <div class="qr-history" id="qr-history"></div>
-      </div>
-
-      <!-- Derma Scan Shortcut -->
-      <div style="margin-top:20px;padding:16px;background:rgba(92,138,60,0.08);border-radius:14px;border:1px solid rgba(92,138,60,0.2)">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <span style="font-size:22px">&#129658;</span>
-          <div>
-            <div style="font-size:14px;font-weight:700;color:#1e293b">더마 기기 QR 스캔</div>
-            <div style="font-size:12px;color:var(--gray-400)">본사 QR로 더마 기기 사용 기록</div>
-          </div>
-        </div>
-        <a id="derma-scan-link" href="scan/index.html" style="display:block;width:100%;padding:12px;background:linear-gradient(135deg,#5c8a3c,#7bae52);color:#fff;text-align:center;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none">
-          &#128247; QR 스캔 & 더마 세션 시작
+          <div class="scan-arrow">&#8250;</div>
         </a>
       </div>
+
     </div>
   </div>
   <a href="admin/index.html" class="admin-link">관리자 페이지</a>
 </div>
 
-<div class="toast-container" style="position:fixed;top:20px;right:20px;z-index:300"></div>
+<div id="toast-wrap" style="position:fixed;top:20px;right:20px;z-index:999"></div>
 
 <script>
 const SALT = 'unicore-qr-2026-salt-key';
-let loginIndex = null;
-let memberDisplay = null;
-let currentHash = null;
-let currentMemberId = null;
+let loginIndex = null, memberDisplay = null;
+let currentHash = null, currentMemberId = null, currentDisplay = null;
+let mbQRObj = null;
 
+/* ── Hash ── */
 async function hashMemberId(id) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(SALT + String(id));
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  const arr = Array.from(new Uint8Array(buf));
-  return arr.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT + String(id)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 16);
 }
 
+/* ── Data load ── */
+async function loadData() {
+  if (!loginIndex) loginIndex = await (await fetch('data/login-index.json')).json();
+  if (!memberDisplay) memberDisplay = await (await fetch('data/member-display.json')).json();
+}
+
+/* ── Login ── */
 document.addEventListener('DOMContentLoaded', async () => {
   const savedHash = sessionStorage.getItem('qr_hash');
   const savedId = sessionStorage.getItem('qr_mid');
   if (savedHash && savedId) {
     try {
-      currentHash = savedHash;
-      currentMemberId = savedId;
-      await loadSecureData();
-      const display = memberDisplay[currentHash];
-      if (display) {
-        showMemberDashboard(display);
-      } else {
-        sessionStorage.removeItem('qr_hash');
-        sessionStorage.removeItem('qr_mid');
-      }
-    } catch { sessionStorage.removeItem('qr_hash'); sessionStorage.removeItem('qr_mid'); }
+      await loadData();
+      const display = memberDisplay[savedHash];
+      if (display) { currentHash = savedHash; currentMemberId = savedId; currentDisplay = display; showDashboard(); return; }
+    } catch {}
+    sessionStorage.removeItem('qr_hash'); sessionStorage.removeItem('qr_mid');
   }
 });
 
-async function loadSecureData() {
-  if (!loginIndex) {
-    const resp = await fetch('data/login-index.json');
-    loginIndex = await resp.json();
-  }
-  if (!memberDisplay) {
-    const resp = await fetch('data/member-display.json');
-    memberDisplay = await resp.json();
-  }
-}
-
 async function handleLogin() {
-  const input = document.getElementById('member-id-input');
-  const errorEl = document.getElementById('login-error');
+  const rawId = document.getElementById('member-input').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if (!rawId) { showError('회원번호를 입력하세요'); return; }
+
   const btn = document.getElementById('login-btn');
-  const rawId = input.value.trim();
-
-  if (!rawId) {
-    showLoginError('회원번호를 입력하세요');
-    return;
-  }
-
   btn.disabled = true;
-  document.getElementById('login-text').style.display = 'none';
-  document.getElementById('login-spinner').style.display = 'block';
-  errorEl.classList.remove('show');
+  document.getElementById('login-text').textContent = '인증 중…';
 
   try {
-    await loadSecureData();
+    await loadData();
     const hash = await hashMemberId(rawId);
     const entry = loginIndex[hash];
-
-    if (!entry) {
-      showLoginError('등록되지 않은 회원번호입니다');
-      resetLoginBtn();
-      return;
-    }
-
-    if (entry.s !== 1) {
-      showLoginError('비활성 상태의 계정입니다. 관리자에게 문의하세요.');
-      resetLoginBtn();
-      return;
-    }
-
+    if (!entry) { showError('등록되지 않은 회원번호입니다'); return; }
+    if (entry.s !== 1) { showError('비활성 계정입니다. 관리자에게 문의하세요.'); return; }
     const display = memberDisplay[hash];
-    if (!display) {
-      showLoginError('회원 정보를 찾을 수 없습니다');
-      resetLoginBtn();
-      return;
-    }
+    if (!display) { showError('회원 정보를 찾을 수 없습니다'); return; }
 
-    currentHash = hash;
-    currentMemberId = rawId;
+    currentHash = hash; currentMemberId = rawId; currentDisplay = display;
     sessionStorage.setItem('qr_hash', hash);
     sessionStorage.setItem('qr_mid', rawId);
-    logMemberLogin(hash, display);
-    showMemberDashboard(display);
-  } catch (err) {
-    showLoginError('데이터를 불러오는데 실패했습니다');
-  }
-
-  resetLoginBtn();
+    showDashboard();
+  } catch { showError('데이터를 불러오는데 실패했습니다'); }
+  finally { btn.disabled = false; document.getElementById('login-text').textContent = '로그인'; }
 }
 
-function resetLoginBtn() {
-  document.getElementById('login-btn').disabled = false;
-  document.getElementById('login-text').style.display = '';
-  document.getElementById('login-spinner').style.display = 'none';
-}
-
-function showLoginError(msg) {
+function showError(msg) {
   const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
 }
 
-function showMemberDashboard(display) {
-  document.getElementById('login-view').style.display = 'none';
-  document.getElementById('member-view').classList.add('show');
-  document.getElementById('member-name').textContent = display.n || '-';
-  document.getElementById('member-id-display').textContent = currentMemberId;
-  const countryMap = { KR: '한국', US: '미국', JP: '일본', CN: '중국' };
-  document.getElementById('member-country').textContent = countryMap[display.c] || display.c || '-';
-  document.getElementById('member-status').textContent = '활동';
-  document.getElementById('member-phone').textContent = display.p || '-';
-  document.getElementById('member-email').textContent = display.e || '-';
+/* ── Dashboard ── */
+const COUNTRY = { KR: '한국', US: '미국', JP: '일본', CN: '중국', VN: '베트남' };
 
-  const history = getMemberQRHistory(currentHash);
-  if (history.length > 0) {
-    generateMemberQR();
+function showDashboard() {
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('dashboard').style.display = '';
+  document.getElementById('d-name').textContent = currentDisplay.n || '-';
+  document.getElementById('d-id').textContent = currentMemberId;
+  document.getElementById('d-country').textContent = COUNTRY[currentDisplay.c] || currentDisplay.c || '-';
+  document.getElementById('d-phone').textContent = currentDisplay.p || '-';
+  document.getElementById('d-email').textContent = currentDisplay.e || '-';
+
+  // Scan link with member pre-fill
+  document.getElementById('scan-btn').href = 'scan/index.html?mid=' + encodeURIComponent(currentMemberId);
+
+  // Auto-generate or restore member QR
+  const stored = getStoredMemberQR();
+  if (stored && stored.expiry > Date.now()) {
+    renderMemberQR(stored.token, stored.expiry);
   }
-  renderQRHistory(currentHash);
-
-  // Update derma scan link with member pre-fill
-  const scanLink = document.getElementById('derma-scan-link');
-  if (scanLink) scanLink.href = 'scan/index.html?mid=' + encodeURIComponent(currentMemberId);
 }
 
 function handleLogout() {
-  sessionStorage.removeItem('qr_hash');
-  sessionStorage.removeItem('qr_mid');
-  currentHash = null;
-  currentMemberId = null;
-  document.getElementById('member-view').classList.remove('show');
-  document.getElementById('login-view').style.display = '';
-  document.getElementById('member-id-input').value = '';
+  sessionStorage.removeItem('qr_hash'); sessionStorage.removeItem('qr_mid');
+  currentHash = currentMemberId = currentDisplay = null;
+  document.getElementById('login-wrap').style.display = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('member-input').value = '';
   document.getElementById('login-error').classList.remove('show');
-  document.getElementById('qr-output').classList.remove('show');
-  document.getElementById('qr-placeholder').style.display = '';
-  document.getElementById('qr-canvas-wrap').innerHTML = '';
+  document.getElementById('mb-qr-canvas').innerHTML = '';
+  document.getElementById('mb-qr-wrap').style.display = 'none';
+  document.getElementById('mb-qr-placeholder').style.display = '';
 }
 
+/* ── Tabs ── */
+function switchTab(tab) {
+  document.querySelectorAll('.qr-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'member') || (i === 1 && tab === 'hq')));
+  document.getElementById('tab-member').style.display = tab === 'member' ? '' : 'none';
+  document.getElementById('tab-hq').style.display = tab === 'hq' ? '' : 'none';
+}
+
+/* ── Member QR (사용자 QR) ── */
 function generateMemberQR() {
   if (!currentHash) return;
-  const base = window.location.origin + window.location.pathname.replace('index.html', '');
-  const qrUrl = base + 'promo/index.html?member=' + currentHash;
+  const expiry = Date.now() + 24 * 60 * 60 * 1000; // 24h
+  const token = 'MB-' + currentHash + '-' + expiry.toString(36);
+  localStorage.setItem('mb_qr_' + currentHash, JSON.stringify({ token, expiry }));
+  renderMemberQR(token, expiry);
+  toast('사용자 QR이 생성되었습니다', 'success');
+}
 
-  document.getElementById('qr-placeholder').style.display = 'none';
-  const output = document.getElementById('qr-output');
-  output.classList.add('show');
-  const wrap = document.getElementById('qr-canvas-wrap');
+function getStoredMemberQR() {
+  if (!currentHash) return null;
+  const raw = localStorage.getItem('mb_qr_' + currentHash);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function renderMemberQR(token, expiry) {
+  document.getElementById('mb-qr-placeholder').style.display = 'none';
+  document.getElementById('mb-qr-wrap').style.display = '';
+  const wrap = document.getElementById('mb-qr-canvas');
   wrap.innerHTML = '';
-
-  new QRCode(wrap, {
-    text: qrUrl,
-    width: 200,
-    height: 200,
-    colorDark: '#0f172a',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M,
-  });
-
-  document.getElementById('qr-url-display').textContent = qrUrl;
-  saveMemberQRHistory(currentHash);
-  renderQRHistory(currentHash);
+  if (mbQRObj) { try { mbQRObj.clear(); } catch {} }
+  mbQRObj = new QRCode(wrap, { text: token, width: 180, height: 180, colorDark: '#1e1b4b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  updateExpiryText(expiry);
+  // Update every second
+  clearInterval(window._expiryTimer);
+  window._expiryTimer = setInterval(() => { if (expiry <= Date.now()) { clearInterval(window._expiryTimer); generateMemberQR(); } else { updateExpiryText(expiry); } }, 1000);
 }
 
-function downloadMemberQR() {
-  const canvas = document.querySelector('#qr-canvas-wrap canvas');
+function updateExpiryText(expiry) {
+  const diff = expiry - Date.now();
+  if (diff <= 0) { document.getElementById('mb-expiry-text').textContent = '만료됨'; return; }
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('mb-expiry-text').textContent = `만료까지 ${h > 0 ? h + '시간 ' : ''}${m}분 ${s}초`;
+}
+
+function downloadQR(containerId) {
+  const canvas = document.querySelector('#' + containerId + ' canvas');
   if (!canvas) return;
-  const link = document.createElement('a');
-  link.download = 'QR_' + currentHash.slice(0, 8) + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  toast('QR 코드가 다운로드되었습니다', 'success');
+  const a = document.createElement('a'); a.download = 'UnicoreQR.png'; a.href = canvas.toDataURL('image/png'); a.click();
 }
 
-function copyMemberQRLink() {
-  const url = document.getElementById('qr-url-display').textContent;
-  navigator.clipboard.writeText(url).then(() => {
-    toast('링크가 복사되었습니다', 'success');
-  }).catch(() => {
-    prompt('링크를 복사하세요:', url);
-  });
-}
-
-function logMemberLogin(hash, display) {
-  const logs = JSON.parse(localStorage.getItem('qr_login_logs') || '[]');
-  logs.push({
-    hash: hash,
-    maskedName: display.n,
-    country: display.c,
-    timestamp: Date.now(),
-  });
-  localStorage.setItem('qr_login_logs', JSON.stringify(logs));
-}
-
-function saveMemberQRHistory(hash) {
-  const key = 'qr_history_' + hash;
-  const history = JSON.parse(localStorage.getItem(key) || '[]');
-  history.unshift({ timestamp: Date.now() });
-  if (history.length > 20) history.length = 20;
-  localStorage.setItem(key, JSON.stringify(history));
-
-  const allGen = JSON.parse(localStorage.getItem('qr_gen_logs') || '[]');
-  allGen.push({ hash: hash, timestamp: Date.now() });
-  localStorage.setItem('qr_gen_logs', JSON.stringify(allGen));
-}
-
-function getMemberQRHistory(hash) {
-  return JSON.parse(localStorage.getItem('qr_history_' + hash) || '[]');
-}
-
-function renderQRHistory(hash) {
-  const history = getMemberQRHistory(hash);
-  const container = document.getElementById('qr-history');
-  if (history.length === 0) { container.innerHTML = ''; return; }
-
-  container.innerHTML = '<h4>QR 생성 이력</h4>' +
-    history.slice(0, 5).map(h => {
-      const d = new Date(h.timestamp);
-      const dateStr = d.getFullYear() + '.' +
-        String(d.getMonth()+1).padStart(2,'0') + '.' +
-        String(d.getDate()).padStart(2,'0') + ' ' +
-        String(d.getHours()).padStart(2,'0') + ':' +
-        String(d.getMinutes()).padStart(2,'0');
-      return '<div class="history-item"><span>QR 코드 생성</span><span class="history-date">' + dateStr + '</span></div>';
-    }).join('');
-}
-
+/* ── Toast ── */
 function toast(msg, type) {
-  const container = document.querySelector('.toast-container');
   const el = document.createElement('div');
-  el.style.cssText = 'padding:12px 20px;border-radius:10px;font-size:14px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:toastIn .3s ease;margin-bottom:8px;';
-  el.style.background = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#1e293b';
+  el.style.cssText = 'padding:11px 18px;border-radius:10px;font-size:13px;color:#fff;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,.15)';
+  el.style.background = type === 'success' ? '#22c55e' : '#ef4444';
   el.textContent = msg;
-  container.appendChild(el);
+  document.getElementById('toast-wrap').appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
 </script>

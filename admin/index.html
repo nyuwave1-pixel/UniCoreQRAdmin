@@ -6,6 +6,22 @@
   <title>UNI&CORE - QR 프로모션 관리자</title>
   <link rel="stylesheet" href="../css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    .qr-type-badge { display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600; }
+    .badge-hq { background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2); }
+    .badge-st { background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.2); }
+    .badge-mb { background:rgba(92,138,60,0.1);color:#5c8a3c;border:1px solid rgba(92,138,60,0.2); }
+    .qr-tabs { display:flex;gap:2px;background:var(--gray-100);border-radius:12px;padding:4px;margin-bottom:24px; }
+    .qr-tab-btn { flex:1;padding:8px 12px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--gray-500);font-family:inherit;transition:all .15s; }
+    .qr-tab-btn.active { background:#fff;color:var(--gray-900);box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:600; }
+    .qr-sub-section { display:none; }
+    .qr-sub-section.active { display:block; }
+    .qr-gen-card { background:#f8fafc;border:1px solid var(--gray-200);border-radius:16px;padding:24px;text-align:center;margin-bottom:20px; }
+    .qr-token-code { font-family:monospace;font-size:11px;color:var(--gray-500);word-break:break-all;margin-top:10px;padding:8px 12px;background:var(--gray-100);border-radius:8px;display:inline-block;max-width:100%; }
+    .hq-qr-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px; }
+    .hq-qr-item { background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px;text-align:center; }
+  </style>
 </head>
 <body>
 
@@ -139,9 +155,13 @@ async function checkAdminPw() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         회원 관리
       </a>
-      <a class="nav-item" data-section="qr-logs">
+      <a class="nav-item" data-section="qr-mgmt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
-        QR 사용 현황
+        QR 관리
+      </a>
+      <a class="nav-item" data-section="qr-logs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        QR 스캔 이력
       </a>
       <a class="nav-item" data-section="login-logs">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -311,7 +331,132 @@ async function checkAdminPw() {
       <div style="margin-top:16px;display:flex;justify-content:center;gap:8px" id="members-pagination"></div>
     </section>
 
-    <!-- QR LOGS -->
+    <!-- QR MANAGEMENT -->
+    <section id="section-qr-mgmt" class="page-section">
+      <div class="qr-tabs">
+        <button class="qr-tab-btn active" onclick="switchQRTab('hq',this)">&#127968; 본사 QR (HQ)</button>
+        <button class="qr-tab-btn" onclick="switchQRTab('st',this)">&#127978; 매장 QR (ST)</button>
+        <button class="qr-tab-btn" onclick="switchQRTab('mb',this)">&#128100; 사용자 QR (MB)</button>
+      </div>
+
+      <!-- HQ QR Tab -->
+      <div id="qr-tab-hq" class="qr-sub-section active">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+          <div class="card">
+            <div class="card-header">
+              <h3>본사 QR 생성</h3>
+              <span class="qr-type-badge badge-hq">HQ 타입</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px;line-height:1.5">
+                더마 기기 사용 인증용 본사 QR입니다.<br>형식: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px">HQ-XXXXXXXX</code>
+              </p>
+              <div style="display:flex;gap:10px;margin-bottom:16px">
+                <input type="number" id="hq-qr-count" value="1" min="1" max="50" style="width:80px;padding:8px 12px;border:2px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit;outline:none">
+                <button class="btn btn-primary" onclick="generateHQBatch()" style="flex:1">QR 생성</button>
+              </div>
+              <div id="hq-gen-area" style="display:none">
+                <div class="qr-gen-card">
+                  <div id="hq-qr-canvas" style="display:inline-block"></div>
+                  <div class="qr-token-code" id="hq-qr-token-display"></div>
+                  <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+                    <button class="btn btn-secondary" style="font-size:12px;padding:6px 14px" onclick="downloadHQQR()">&#8595; 다운로드</button>
+                    <button class="btn btn-secondary" style="font-size:12px;padding:6px 14px" onclick="downloadAllHQQR()">전체 다운로드</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>HQ QR 현황</h3></div>
+            <div class="card-body">
+              <div class="stats-grid" style="grid-template-columns:1fr 1fr;gap:10px">
+                <div class="stat-card" style="padding:14px">
+                  <div class="stat-value" style="font-size:22px" id="hq-total">0</div>
+                  <div class="stat-label" style="font-size:11px">총 생성</div>
+                </div>
+                <div class="stat-card" style="padding:14px">
+                  <div class="stat-value" style="font-size:22px" id="hq-used">0</div>
+                  <div class="stat-label" style="font-size:11px">사용됨</div>
+                </div>
+                <div class="stat-card" style="padding:14px">
+                  <div class="stat-value" style="font-size:22px" id="hq-unused">0</div>
+                  <div class="stat-label" style="font-size:11px">미사용</div>
+                </div>
+                <div class="stat-card" style="padding:14px">
+                  <div class="stat-value" style="font-size:22px" id="hq-today">0</div>
+                  <div class="stat-label" style="font-size:11px">오늘 생성</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>HQ QR 목록</h3>
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="exportHQTokens()">CSV 내보내기</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>토큰</th><th>상태</th><th>생성 시간</th><th>사용 시간</th></tr></thead>
+              <tbody id="hq-qr-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ST QR Tab -->
+      <div id="qr-tab-st" class="qr-sub-section">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <h3>매장 QR 현황</h3>
+            <span class="qr-type-badge badge-st">ST 타입</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">매장에서 직접 생성한 QR 코드 이력입니다.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>매장</th><th>토큰 (앞 24자)</th><th>생성 시간</th></tr></thead>
+                <tbody id="st-qr-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card"><div class="stat-value" id="st-total">0</div><div class="stat-label">총 매장 QR</div></div>
+          <div class="stat-card"><div class="stat-value" id="st-store001">0</div><div class="stat-label">강남점</div></div>
+          <div class="stat-card"><div class="stat-value" id="st-store002">0</div><div class="stat-label">부산점</div></div>
+          <div class="stat-card"><div class="stat-value" id="st-store003">0</div><div class="stat-label">제주점</div></div>
+        </div>
+      </div>
+
+      <!-- MB QR Tab -->
+      <div id="qr-tab-mb" class="qr-sub-section">
+        <div class="card">
+          <div class="card-header">
+            <h3>사용자 QR 스캔 이력</h3>
+            <span class="qr-type-badge badge-mb">MB 타입</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">회원이 생성한 사용자 QR 스캔 확인 이력입니다.</p>
+            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+              <div class="stat-card"><div class="stat-value" id="mb-total-scans">0</div><div class="stat-label">총 확인</div></div>
+              <div class="stat-card"><div class="stat-value" id="mb-today-scans">0</div><div class="stat-label">오늘 확인</div></div>
+              <div class="stat-card"><div class="stat-value" id="mb-unique-members">0</div><div class="stat-label">고유 회원</div></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>해시 ID (앞 12자)</th><th>매장</th><th>스캔 시간</th></tr></thead>
+                <tbody id="mb-scan-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR LOGS (Scan logs) -->
     <section id="section-qr-logs" class="page-section">
       <div class="toolbar">
         <div class="toolbar-left">
@@ -495,10 +640,11 @@ function showSection(name) {
   document.getElementById('section-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector('.nav-item[data-section="' + name + '"]')?.classList.add('active');
-  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-logs': 'QR 사용 현황', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', 'store-mgmt': '매장 관리' };
+  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-mgmt': 'QR 관리', 'qr-logs': 'QR 스캔 이력', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', 'store-mgmt': '매장 관리' };
   document.querySelector('.header-title').textContent = titles[name] || '';
   if (name === 'dashboard') renderDashboard();
   else if (name === 'members') { memberPage = 0; filterMembers(); }
+  else if (name === 'qr-mgmt') renderQRMgmt();
   else if (name === 'qr-logs') renderQRLogs();
   else if (name === 'login-logs') renderLoginLogs();
   else if (name === 'derma-sessions') renderDermaSessions();
@@ -872,6 +1018,191 @@ function toast(msg, type) {
   el.textContent = msg;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+/* ════════════════════════════════════
+   QR MANAGEMENT
+════════════════════════════════════ */
+let _hqQRBatch = [];
+let _hqQRInstance = null;
+let _activeQRTab = 'hq';
+
+function switchQRTab(tab, btn) {
+  _activeQRTab = tab;
+  document.querySelectorAll('.qr-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.qr-sub-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('qr-tab-' + tab).classList.add('active');
+  if (tab === 'hq') renderHQTab();
+  else if (tab === 'st') renderSTTab();
+  else if (tab === 'mb') renderMBTab();
+}
+
+function renderQRMgmt() {
+  renderHQTab();
+}
+
+/* ── HQ QR ── */
+function getHQTokens() {
+  return JSON.parse(localStorage.getItem('hq_qr_tokens') || '{}');
+}
+
+function saveHQTokens(tokens) {
+  localStorage.setItem('hq_qr_tokens', JSON.stringify(tokens));
+}
+
+function randHQCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return 'HQ-' + code;
+}
+
+function generateHQBatch() {
+  const count = Math.min(50, Math.max(1, parseInt(document.getElementById('hq-qr-count').value) || 1));
+  const tokens = getHQTokens();
+  const now = Date.now();
+  const today = new Date().toISOString().split('T')[0];
+  _hqQRBatch = [];
+
+  for (let i = 0; i < count; i++) {
+    let token;
+    do { token = randHQCode(); } while (tokens[token]);
+    tokens[token] = { used: false, createdAt: now, date: today };
+    _hqQRBatch.push(token);
+  }
+  saveHQTokens(tokens);
+
+  // Show first QR
+  const area = document.getElementById('hq-qr-canvas');
+  area.innerHTML = '';
+  _hqQRInstance = new QRCode(area, {
+    text: _hqQRBatch[0],
+    width: 180, height: 180,
+    colorDark: '#1e293b', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  document.getElementById('hq-qr-token-display').textContent = _hqQRBatch.join('\n');
+  document.getElementById('hq-gen-area').style.display = 'block';
+
+  renderHQTab();
+  toast(count + '개 HQ QR 생성 완료', 'success');
+}
+
+function downloadHQQR() {
+  const canvas = document.getElementById('hq-qr-canvas').querySelector('canvas');
+  if (!canvas || !_hqQRBatch.length) { toast('먼저 QR을 생성하세요', 'error'); return; }
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'hq_qr_' + _hqQRBatch[0] + '.png';
+  a.click();
+}
+
+function downloadAllHQQR() {
+  if (!_hqQRBatch.length) { toast('생성된 QR이 없습니다', 'error'); return; }
+  let csv = '﻿토큰,생성시간\n';
+  const tokens = getHQTokens();
+  _hqQRBatch.forEach(t => {
+    csv += t + ',' + fmtDate(tokens[t]?.createdAt || Date.now()) + '\n';
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'hq_qr_batch_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('배치 CSV 다운로드 완료', 'success');
+}
+
+function exportHQTokens() {
+  const tokens = getHQTokens();
+  let csv = '﻿토큰,상태,생성시간,사용시간\n';
+  Object.entries(tokens).sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0)).forEach(([t, d]) => {
+    csv += t + ',' + (d.used ? '사용됨' : '미사용') + ',' + fmtDate(d.createdAt) + ',' + (d.usedAt ? fmtDate(d.usedAt) : '-') + '\n';
+  });
+  downloadCSV(csv, 'hq_tokens_' + new Date().toISOString().split('T')[0] + '.csv');
+}
+
+function renderHQTab() {
+  const tokens = getHQTokens();
+  const entries = Object.entries(tokens);
+  const today = new Date().toISOString().split('T')[0];
+  const total = entries.length;
+  const used = entries.filter(([,d]) => d.used).length;
+  const unused = total - used;
+  const todayCount = entries.filter(([,d]) => d.date === today).length;
+
+  document.getElementById('hq-total').textContent = total;
+  document.getElementById('hq-used').textContent = used;
+  document.getElementById('hq-unused').textContent = unused;
+  document.getElementById('hq-today').textContent = todayCount;
+
+  const tbody = document.getElementById('hq-qr-table');
+  const sorted = entries.sort((a,b) => (b[1].createdAt||0)-(a[1].createdAt||0)).slice(0, 100);
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--gray-400)">생성된 HQ QR이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(([t, d]) =>
+    '<tr><td><code style="font-size:12px">' + esc(t) + '</code></td>' +
+    '<td><span class="badge ' + (d.used ? 'badge-expired' : 'badge-active') + '">' + (d.used ? '사용됨' : '미사용') + '</span></td>' +
+    '<td>' + fmtDate(d.createdAt) + '</td>' +
+    '<td>' + (d.usedAt ? fmtDate(d.usedAt) : '-') + '</td></tr>'
+  ).join('');
+}
+
+/* ── ST QR ── */
+function renderSTTab() {
+  const storeIds = ['STORE001', 'STORE002', 'STORE003'];
+  let allEntries = [];
+
+  storeIds.forEach(sid => {
+    const history = JSON.parse(localStorage.getItem('st_qr_history_' + sid) || '[]');
+    history.forEach(h => allEntries.push({ ...h, storeId: sid }));
+  });
+
+  allEntries.sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+
+  const STORE_NAMES = { 'STORE001':'강남점','STORE002':'부산점','STORE003':'제주점' };
+  document.getElementById('st-total').textContent = allEntries.length;
+  document.getElementById('st-store001').textContent = allEntries.filter(e => e.storeId === 'STORE001').length;
+  document.getElementById('st-store002').textContent = allEntries.filter(e => e.storeId === 'STORE002').length;
+  document.getElementById('st-store003').textContent = allEntries.filter(e => e.storeId === 'STORE003').length;
+
+  const tbody = document.getElementById('st-qr-table');
+  if (allEntries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-400)">매장 QR 이력이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = allEntries.slice(0, 100).map(e =>
+    '<tr><td><span class="badge badge-active">' + esc(STORE_NAMES[e.storeId] || e.storeId) + '</span></td>' +
+    '<td><code style="font-size:11px">' + esc((e.token||'').slice(0, 24)) + '...</code></td>' +
+    '<td>' + fmtDate(e.createdAt) + '</td></tr>'
+  ).join('');
+}
+
+/* ── MB QR ── */
+function renderMBTab() {
+  const scanLogs = JSON.parse(localStorage.getItem('qr_scan_logs') || '[]');
+  const mbLogs = scanLogs.filter(l => l.action === 'member_qr_confirmed');
+  const today = new Date().toISOString().split('T')[0];
+  const todayMB = mbLogs.filter(l => new Date(l.timestamp).toISOString().split('T')[0] === today);
+  const uniqueHashes = new Set(mbLogs.map(l => l.hash)).size;
+
+  document.getElementById('mb-total-scans').textContent = mbLogs.length;
+  document.getElementById('mb-today-scans').textContent = todayMB.length;
+  document.getElementById('mb-unique-members').textContent = uniqueHashes;
+
+  const STORE_NAMES = { 'STORE001':'강남점','STORE002':'부산점','STORE003':'제주점','HQ':'본사' };
+  const tbody = document.getElementById('mb-scan-table');
+  const sorted = mbLogs.sort((a,b) => (b.timestamp||0)-(a.timestamp||0)).slice(0, 100);
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--gray-400)">사용자 QR 스캔 이력이 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(l =>
+    '<tr><td><code style="font-size:12px">' + esc((l.hash||'').slice(0, 12)) + '...</code></td>' +
+    '<td>' + esc(STORE_NAMES[l.storeId] || l.storeId || '-') + '</td>' +
+    '<td>' + fmtDate(l.timestamp) + '</td></tr>'
+  ).join('');
 }
 </script>
 </body>
