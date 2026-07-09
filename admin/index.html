@@ -199,6 +199,10 @@ async function checkAdminPw() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         매장 관리
       </a>
+      <a class="nav-item" data-section="devices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        기기 관리
+      </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-title">링크</div>
@@ -661,8 +665,126 @@ async function checkAdminPw() {
       </div>
     </section>
 
+    <!-- DEVICES -->
+    <section id="section-devices" class="page-section">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="device-search" placeholder="기기명, 시리얼, 매장 검색..." oninput="renderDevices()">
+          </div>
+          <select id="device-store-filter" onchange="renderDevices()">
+            <option value="all">전체 매장</option>
+          </select>
+          <select id="device-status-filter" onchange="renderDevices()">
+            <option value="all">전체 상태</option>
+            <option value="정상">정상</option>
+            <option value="점검중">점검중</option>
+            <option value="고장">고장</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-secondary" onclick="exportDevices()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV 내보내기
+          </button>
+          <button class="btn btn-primary" onclick="openDeviceModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            기기 등록
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin:16px 0 20px">
+        <div class="stat-card">
+          <div class="stat-header"><div class="stat-icon blue" style="font-size:18px">&#128241;</div></div>
+          <div class="stat-value" id="dev-total">0</div>
+          <div class="stat-label">총 기기 수</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><div class="stat-icon green" style="font-size:18px">&#9989;</div></div>
+          <div class="stat-value" id="dev-normal">0</div>
+          <div class="stat-label">정상 가동</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><div class="stat-icon orange" style="font-size:18px">&#128295;</div></div>
+          <div class="stat-value" id="dev-repair">0</div>
+          <div class="stat-label">점검중</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><div class="stat-icon purple" style="font-size:18px">&#128230;</div></div>
+          <div class="stat-value" id="dev-unassigned">0</div>
+          <div class="stat-label">미배정</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>기기 ID</th>
+                <th>기기명</th>
+                <th>모델</th>
+                <th>시리얼 번호</th>
+                <th>배정 매장</th>
+                <th>상태</th>
+                <th>메모</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="devices-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </div>
 </main>
+
+<!-- 기기 등록/수정 모달 -->
+<div class="modal-overlay" id="device-modal">
+  <div class="modal" style="max-width:500px;width:100%">
+    <div class="modal-header">
+      <h2 id="device-modal-title">기기 등록</h2>
+      <button class="modal-close" onclick="closeDeviceModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="device-edit-id">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">기기명 *</label>
+          <input type="text" id="device-name-input" placeholder="예: DermaHome 10 #1" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">모델 *</label>
+          <select id="device-model-input" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;background:#fff"></select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">시리얼 번호 *</label>
+          <input type="text" id="device-serial-input" placeholder="예: DH10-2024-00001" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">배정 매장</label>
+          <select id="device-store-input" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;background:#fff"></select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">상태</label>
+          <select id="device-status-input" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;background:#fff">
+            <option value="정상">정상</option>
+            <option value="점검중">점검중</option>
+            <option value="고장">고장</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px">메모</label>
+          <input type="text" id="device-memo-input" placeholder="비고 (선택)" style="width:100%;padding:12px 14px;border:2px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveDevice()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- 혜택 등록 모달 -->
 <div class="benefit-modal-overlay" id="benefit-modal-overlay" onclick="if(event.target===this)closeBenefitModal()">
@@ -793,7 +915,7 @@ function showSection(name) {
   document.getElementById('section-' + name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector('.nav-item[data-section="' + name + '"]')?.classList.add('active');
-  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-mgmt': 'QR 관리', 'qr-logs': 'QR 스캔 이력', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', benefits: '혜택 관리', 'store-mgmt': '매장 관리' };
+  const titles = { dashboard: '대시보드', members: '회원 관리', 'qr-mgmt': 'QR 관리', 'qr-logs': 'QR 스캔 이력', 'login-logs': '로그인 이력', 'derma-sessions': '더마 세션 현황', benefits: '혜택 관리', 'store-mgmt': '매장 관리', devices: '기기 관리' };
   document.querySelector('.header-title').textContent = titles[name] || '';
   if (name === 'dashboard') renderDashboard();
   else if (name === 'members') { memberPage = 0; filterMembers(); }
@@ -803,6 +925,7 @@ function showSection(name) {
   else if (name === 'derma-sessions') renderDermaSessions();
   else if (name === 'benefits') renderBenefitsSection();
   else if (name === 'store-mgmt') renderStoreMgmt();
+  else if (name === 'devices') renderDevices();
 }
 
 async function loadData() {
@@ -1163,6 +1286,159 @@ function renderStoreMgmt() {
     const lastActivity = storeSessions.length > 0 ? fmtDate(Math.max(...storeSessions.map(s => s.timestamp))) : '-';
     return '<tr><td><code>' + esc(id) + '</code></td><td><strong>' + esc(store.name) + '</strong></td><td>' + esc(store.region) + '</td><td>' + count + '</td><td>' + lastActivity + '</td><td><a href="../store/index.html" class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px;text-decoration:none">관리</a></td></tr>';
   }).join('');
+}
+
+/* ═══════════════════════════════════════
+   기기 관리 (DEVICE MANAGEMENT)
+═══════════════════════════════════════ */
+const DEVICE_STORAGE_KEY = 'unicore_devices';
+let devicesSeeded = false;
+
+function getDevices() {
+  try { return JSON.parse(localStorage.getItem(DEVICE_STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveDevices(devices) {
+  localStorage.setItem(DEVICE_STORAGE_KEY, JSON.stringify(devices));
+}
+
+async function seedDevices() {
+  if (devicesSeeded) return;
+  devicesSeeded = true;
+  if (getDevices().length > 0) return;
+  try {
+    const resp = await fetch('../data/devices.json');
+    if (resp.ok) saveDevices(await resp.json());
+  } catch { /* 초기 데이터 없이 시작 */ }
+}
+
+function initDeviceSelects() {
+  const storeOpts = Object.entries(STORES_DATA).map(([id, s]) => '<option value="' + id + '">' + esc(s.name) + '</option>').join('');
+  const filter = document.getElementById('device-store-filter');
+  if (filter && filter.options.length <= 1) filter.innerHTML = '<option value="all">전체 매장</option>' + storeOpts + '<option value="">미배정</option>';
+  const storeInput = document.getElementById('device-store-input');
+  if (storeInput && storeInput.options.length === 0) storeInput.innerHTML = '<option value="">미배정</option>' + storeOpts;
+  const modelInput = document.getElementById('device-model-input');
+  if (modelInput && modelInput.options.length === 0) modelInput.innerHTML = Object.entries(DEVICE_NAMES).map(([id, n]) => '<option value="' + id + '">' + esc(n) + '</option>').join('');
+}
+
+async function renderDevices() {
+  await seedDevices();
+  initDeviceSelects();
+
+  const devices = getDevices();
+  const q = (document.getElementById('device-search')?.value || '').toLowerCase();
+  const storeF = document.getElementById('device-store-filter')?.value ?? 'all';
+  const statusF = document.getElementById('device-status-filter')?.value ?? 'all';
+
+  document.getElementById('dev-total').textContent = devices.length;
+  document.getElementById('dev-normal').textContent = devices.filter(d => d.status === '정상').length;
+  document.getElementById('dev-repair').textContent = devices.filter(d => d.status === '점검중').length;
+  document.getElementById('dev-unassigned').textContent = devices.filter(d => !d.storeId).length;
+
+  const filtered = devices.filter(d => {
+    if (storeF !== 'all' && (d.storeId || '') !== storeF) return false;
+    if (statusF !== 'all' && d.status !== statusF) return false;
+    if (q) {
+      const hay = ((d.name || '') + ' ' + (d.serial || '') + ' ' + (STORES_DATA[d.storeId]?.name || '')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('devices-table-body');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:24px">등록된 기기가 없습니다</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(d => {
+    const statusClass = d.status === '정상' ? 'badge-active' : d.status === '점검중' ? 'badge-pending' : 'badge-expired';
+    return '<tr>' +
+      '<td><code style="font-size:11px">' + esc(d.id) + '</code></td>' +
+      '<td><strong>' + esc(d.name || '') + '</strong></td>' +
+      '<td>' + esc(DEVICE_NAMES[d.model] || d.model || '-') + '</td>' +
+      '<td><code style="font-size:11px">' + esc(d.serial || '') + '</code></td>' +
+      '<td>' + esc(STORES_DATA[d.storeId]?.name || '미배정') + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + esc(d.status || '-') + '</span></td>' +
+      '<td style="font-size:12px;color:var(--gray-500)">' + esc(d.memo || '') + '</td>' +
+      '<td><button class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px" onclick="openDeviceModal(\'' + esc(d.id) + '\')">수정</button> ' +
+      '<button class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px;color:#dc2626" onclick="deleteDevice(\'' + esc(d.id) + '\')">삭제</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function openDeviceModal(id) {
+  initDeviceSelects();
+  document.getElementById('device-edit-id').value = id || '';
+  document.getElementById('device-modal-title').textContent = id ? '기기 수정' : '기기 등록';
+
+  const dev = id ? getDevices().find(d => d.id === id) : null;
+  document.getElementById('device-name-input').value = dev?.name || '';
+  document.getElementById('device-model-input').value = dev?.model || Object.keys(DEVICE_NAMES)[0];
+  document.getElementById('device-serial-input').value = dev?.serial || '';
+  document.getElementById('device-store-input').value = dev?.storeId || '';
+  document.getElementById('device-status-input').value = dev?.status || '정상';
+  document.getElementById('device-memo-input').value = dev?.memo || '';
+
+  document.getElementById('device-modal').classList.add('show');
+  document.getElementById('device-name-input').focus();
+}
+
+function closeDeviceModal() {
+  document.getElementById('device-modal').classList.remove('show');
+}
+
+function saveDevice() {
+  const name = document.getElementById('device-name-input').value.trim();
+  const serial = document.getElementById('device-serial-input').value.trim();
+  if (!name) { toast('기기명을 입력하세요', 'error'); return; }
+  if (!serial) { toast('시리얼 번호를 입력하세요', 'error'); return; }
+
+  const devices = getDevices();
+  const editId = document.getElementById('device-edit-id').value;
+  const now = Date.now();
+  const fields = {
+    name,
+    model: document.getElementById('device-model-input').value,
+    serial,
+    storeId: document.getElementById('device-store-input').value,
+    status: document.getElementById('device-status-input').value,
+    memo: document.getElementById('device-memo-input').value.trim(),
+  };
+
+  if (editId) {
+    const idx = devices.findIndex(d => d.id === editId);
+    if (idx < 0) { toast('기기를 찾을 수 없습니다', 'error'); return; }
+    if (devices.some(d => d.serial === serial && d.id !== editId)) { toast('이미 등록된 시리얼 번호입니다', 'error'); return; }
+    devices[idx] = { ...devices[idx], ...fields, updatedAt: now };
+    toast('기기 정보가 수정되었습니다', 'success');
+  } else {
+    if (devices.some(d => d.serial === serial)) { toast('이미 등록된 시리얼 번호입니다', 'error'); return; }
+    const maxNum = devices.reduce((m, d) => Math.max(m, parseInt(String(d.id).replace('DEV', ''), 10) || 0), 0);
+    devices.push({ id: 'DEV' + String(maxNum + 1).padStart(3, '0'), ...fields, registeredAt: now, lastUsed: null });
+    toast('기기가 등록되었습니다', 'success');
+  }
+  saveDevices(devices);
+  closeDeviceModal();
+  renderDevices();
+}
+
+function deleteDevice(id) {
+  if (!confirm('이 기기를 삭제하시겠습니까?\n삭제된 데이터는 복구되지 않습니다.')) return;
+  saveDevices(getDevices().filter(d => d.id !== id));
+  renderDevices();
+  toast('기기가 삭제되었습니다', 'success');
+}
+
+function exportDevices() {
+  const devices = getDevices();
+  let csv = '﻿기기ID,기기명,모델,시리얼번호,배정매장,상태,메모,등록일\n';
+  devices.forEach(d => {
+    csv += d.id + ',"' + (d.name || '') + '",' + (DEVICE_NAMES[d.model] || d.model || '') + ',' + (d.serial || '') + ',' +
+      (STORES_DATA[d.storeId]?.name || '미배정') + ',' + (d.status || '') + ',"' + (d.memo || '') + '",' +
+      (d.registeredAt ? fmtDate(d.registeredAt) : '') + '\n';
+  });
+  downloadCSV(csv, 'devices_' + new Date().toISOString().split('T')[0] + '.csv');
+  toast('기기 목록이 다운로드되었습니다', 'success');
 }
 
 function toast(msg, type) {

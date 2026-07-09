@@ -350,6 +350,7 @@ table tr:hover td { background: var(--gray-50); }
 .badge-active { background: #dcfce7; color: #16a34a; }
 .badge-inactive { background: var(--gray-100); color: var(--gray-500); }
 .badge-expired { background: #fee2e2; color: #dc2626; }
+.badge-pending { background: #fef3c7; color: #d97706; }
 
 .badge-coupon { background: #fef3c7; color: #b45309; }
 .badge-event { background: #ede9fe; color: #7c3aed; }

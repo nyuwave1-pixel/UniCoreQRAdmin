@@ -1,0 +1,57 @@
+[
+  {
+    "id": "DEV001",
+    "name": "DermaHome 10 #1",
+    "model": "dermahome10",
+    "serial": "DH10-2024-00001",
+    "storeId": "STORE001",
+    "status": "정상",
+    "memo": "강남점 1번 기기",
+    "registeredAt": 1700000000000,
+    "lastUsed": null
+  },
+  {
+    "id": "DEV002",
+    "name": "DermaHome Pro #1",
+    "model": "dermahome-pro",
+    "serial": "DHP-2024-00001",
+    "storeId": "STORE001",
+    "status": "정상",
+    "memo": "강남점 2번 기기",
+    "registeredAt": 1700000000000,
+    "lastUsed": null
+  },
+  {
+    "id": "DEV003",
+    "name": "DermaHome 10 #2",
+    "model": "dermahome10",
+    "serial": "DH10-2024-00002",
+    "storeId": "STORE002",
+    "status": "정상",
+    "memo": "부산점 기기",
+    "registeredAt": 1710000000000,
+    "lastUsed": null
+  },
+  {
+    "id": "DEV004",
+    "name": "Derma LED #1",
+    "model": "derma-led",
+    "serial": "DLED-2025-00001",
+    "storeId": "STORE003",
+    "status": "점검중",
+    "memo": "제주점 기기 — 정기 점검 중",
+    "registeredAt": 1720000000000,
+    "lastUsed": null
+  },
+  {
+    "id": "DEV005",
+    "name": "Scalp Care #1",
+    "model": "scalp-care",
+    "serial": "SC-2025-00001",
+    "storeId": "HQ",
+    "status": "정상",
+    "memo": "본사 직영 두피 케어 기기",
+    "registeredAt": 1730000000000,
+    "lastUsed": null
+  }
+]
