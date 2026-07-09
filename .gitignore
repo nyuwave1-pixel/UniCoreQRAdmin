@@ -29,3 +29,5 @@ Thumbs.db
 
 # Claude Code 세션 (절대 포함 금지)
 .claude/
+.vercel
+.netlify/
